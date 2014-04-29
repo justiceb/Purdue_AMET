@@ -43,7 +43,7 @@ sy_0 = 70000 * 0.3048;   %m
 vx_0 = 0;
 vy_0 = 0.0000001;        %make really small value to init angle of attack
 theta_0 = 90;            %degrees
-theta_dot_0 = 20;         %degrees/sec
+theta_dot_0 = 0;         %degrees/sec
 t_end = 50;               %(s) sim end time
 
 %run ode45 solver
@@ -71,6 +71,10 @@ for n = 1:1:length(sx)
     Torque(n) = data.Torque;
     M(n) = data.M;
     a(n) = data.a;
+    vy_sum(n) = data.vy_sum;
+    vx_sum(n) = data.vx_sum;
+    ay(n) = data.ay;
+    ax(n) = data.ax;
 end
 
 

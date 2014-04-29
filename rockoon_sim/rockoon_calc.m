@@ -28,19 +28,25 @@ R_H2 = 4124;                         %specific gas constant hydrogen (SI)
 %get gaseous density and speed of sound
 [rho_air,a_air,temp_air,press_air,kvisc,ZorH]=stdatmo(sy);   %SI units
 
-if (sy-sy_0 <= balloon_height)
-    rho = press_air/(R_H2 * temp_air);
-    a = sqrt(gamma_H2 * R_H2 * temp_air);
-else
-    rho = rho_air;
-    a = a_air;
+if (sy-sy_0 <= balloon_height)              %if we are inside of the balloon
+    rho = press_air/(R_H2 * temp_air);      %set gas density to hydrogen density
+    a = sqrt(gamma_H2 * R_H2 * temp_air);   %set gas speed of sound to hydrogen speed of sound
+    vx_wind = 0;                            %(m/s) wind x velocity at altitude
+    vy_wind = 0;                            %(m/s) wind y velocity at altitude
+else                                        %if we are outside of the balloon
+    rho = rho_air;                          %use air density
+    a = a_air;                              %use air speed of sound
+    vx_wind = 20 * 0.44704;                 %(m/s) wind x velocity at altitude
+    vy_wind = 0;                            %(m/s) wind y velocity at altitude
 end
 
 %calculate freestream velocity and angle of attack
-v = norm([vx vy]);         %[m/s] velocity magnitude
-M = v/a;               %freestream Mach
-v_theta = atan2d(vy,vx);   %[deg] polar angle 
-alpha = v_theta - theta;   %[deg] angle of attack
+vx_sum = vx + vx_wind;             %(m/s) get freestream velocity
+vy_sum = vy + vy_wind;             %(m/s) get freestream velocity
+v = norm([vx_sum vy_sum]);         %[m/s] velocity magnitude
+M = v/a;                           %freestream Mach
+v_theta = atan2d(vy_sum,vx_sum);   %[deg] polar angle 
+alpha = v_theta - theta;           %[deg] angle of attack
 
 %interpolate RASAero for aerodynamics data
 CD = interp2(rasaero.Mach,rasaero.alpha_deg,rasaero.CD,M,abs(alpha),'spline');           %
@@ -91,6 +97,10 @@ data.T = T;
 data.Torque = Torque;
 data.M = M;
 data.a = a;
+data.vy_sum = vy_sum;
+data.vx_sum = vx_sum;
+data.ay = ay;
+data.ax = ax;
 end
 
 
