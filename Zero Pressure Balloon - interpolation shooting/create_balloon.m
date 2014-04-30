@@ -23,8 +23,8 @@ R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
 rho_PE = 1000;                 %kg/m^3  density of polyethlyene we purchased
 thickness_PE = 18 * 1E-6;     %m  thickness of polyethylene we purchased
-Wpayload = 50*4.44822162;      %N  payload weight
-alt_apogee = 10000 * 0.3048;  %altitude at apogee (m)
+Wpayload = 30*4.44822162;      %N  payload weight
+alt_apogee = 70000 * 0.3048;  %altitude at apogee (m)
 numGores = 7;                %number of gores
 goreTheta = (2*pi)/numGores;  %radians rotation per gore
 
@@ -57,23 +57,19 @@ S0 = 0;              %area at base = 0
 V0 = 0;              %volume at base = 0
 
 %final value conditions
-r_dash_end = 0;       %radius at apex = 0
-theta_end = -pi/2;    %angle at apex = -90 (radians)
+r_end_condition = 0;       %radius at apex = 0
+theta_end_condition = -pi/2;    %angle at apex = -90 (radians)
 
-%Guess conditions
-theta_0 = 40 * 0.0174532925;        %angle at base (rads)  [GUESS]
-m0 = 2*pi*cos(theta_0);             %function of angle at base
-
-theta_error = 0.1;
-r_error = 2;
-c = 0.1;                              %shooting method error weight
-while abs(theta_error) > 0.01
-    r_error = 2;
-    s_dash_end = 1;                       %arclength of gore (m) [GUESS]
-    while abs(r_error) > 0.01             %shooting method until error for r is small
-            %run simulink model
-            sim('natural_balloon')        %run simulink model
-            s_dash = simout.time;
+%iterate
+theta_end_error = 0.1;                         %set error high to enter loop
+theta_0_guess = 60 * 0.0174532925;             %angle at base (rads)  [GUESS]
+m0 = 2*pi*cos(theta_0_guess);                  %calculation dependant on guess
+while abs(theta_end_error) > 0.00174532925     %while error high, keep iterating
+    r_end_error = 2;                            %set error high to enter loop
+    s_dash_end_guess = 2;                       %arclength of gore (m/lambda) [GUESS]
+    while abs(r_end_error) > 0.001               %shooting method until error for r is small
+            sim('natural_balloon')              %run simulink model
+            s_dash = simout.time;               %format sim outputs
             z_dash = simout.data(:,1);
             r_dash = simout.data(:,2);
             S_dash = simout.data(:,4);
@@ -87,18 +83,50 @@ while abs(theta_error) > 0.01
             S = S_dash(end)*lambda^2;  %balloon surface area (m^2)
             V = V_dash(end)*lambda^3;  %balloon volume (m^3)
         
-            %calculate radius error  (note that r = r_dash*lambda)
-            r_error = (r_dash_end - r_dash(end)) * lambda;
-            theta_error = theta_end - theta(end);
+            %calculate radius error
+            r_end_error = (r_end_condition - r(end));
+            theta_end_error = theta_end_condition - theta(end);
             
-            %calculate arclength guess for next iteration
-            s_dash_end = s_dash_end - c * r_error;
-            
+            %Use interpolation to determine next guess
+            if exist('shoot1') == 0                                  %this was our first guess.  We must pick a 2nd arbitrary guess
+                shoot1.A2 = s_dash_end_guess;                        
+                shoot1.Z2 = r(end);
+                
+                s_dash_end_guess = s_dash_end_guess + 0.0001;        %set next guess to our first guess + some small amount
+            else
+                shoot1.A1 = shoot1.A2;
+                shoot1.Z1 = shoot1.Z2;
+                shoot1.A2 = s_dash_end_guess;
+                shoot1.Z2 = r(end);
+                Zsol = r_end_condition;
+                a = Zsol - shoot1.Z1;
+                b = shoot1.Z2 - Zsol;
+                
+                Anew = (a*shoot1.A2 + b*shoot1.A1)/(a+b);            %calculate next guess based upon interpolation of previous 2 results
+                s_dash_end_guess = Anew;
+            end  
     end
+    clearvars shoot1;
 
-    %calculate theta_0 guess for next iteration
-    theta_0 = theta_0 - c * theta_error;
-    m0 = 2*pi*cos(theta_0);
+    %calculate theta_0 guess for next iteration using interpolation method
+    if exist('shoot2') == 0
+        shoot2.A2 = theta_0_guess;
+        shoot2.Z2 = theta(end);
+                
+        theta_0_guess = theta_0_guess + 0.001;
+    else
+        shoot2.A1 = shoot2.A2;
+        shoot2.Z1 = shoot2.Z2;
+        shoot2.A2 = theta_0_guess;
+        shoot2.Z2 = theta(end);
+        Zsol = theta_end_condition;
+        a = Zsol - shoot2.Z1;
+        b = shoot2.Z2 - Zsol;
+                
+        Anew = (a*shoot2.A2 + b*shoot2.A1)/(a+b);
+        theta_0_guess = Anew;
+        m0 = 2*pi*cos(theta_0_guess);
+    end
 end
 
 %% Calculate sea level hydrogen needed
