@@ -74,7 +74,8 @@ fprintf('Total Hydrogen to Fill = %f ft^3 \n',V_H2_SL * 35.3147);
 %run ode45 solver
 timerange = [0 10000];
 init = [alt0 0];
-[t, outputs] = ode45(@ascent_calc, timerange, init, [], m_H2, m_system, balloon.V);
+options = odeset('Events',@detect_apogee);
+[t, outputs] = ode45(@ascent_calc, timerange, init, options, m_H2, m_system, balloon.V);
 
 %extract outputs
 s = outputs(:,1);
@@ -119,11 +120,6 @@ plot(Vgas,s*3.28084)
 xlabel('Balloon Volume (m^3)')
 ylabel('Altitude (ft)')
 grid on
-
-
-
-
-
 
 
 
