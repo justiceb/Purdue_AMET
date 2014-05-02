@@ -1,4 +1,6 @@
-clc; clear; close all
+run clc; clear; close all
+addpath Ascent
+addpath Common_Functions
 
 %% Balloon Shape
 %{
@@ -16,6 +18,7 @@ the designed payload weight.
 %}
 
 run Balloon_Shape/create_balloon
+volRevolve(r,z);
 
 %determine variables to keep
 balloon.V = V;                        %(m^3) balloon volume when deployed
@@ -41,10 +44,10 @@ at apogee.
 g = 9.81;                     %m/s/s
 R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
-alt0 = 180;                   %(m) launch elevation
 
 %inputs for day of launch
-V_H2_surplus = 500 * 0.0283168;         %(m^3) surplus volume of H2 added to balloon
+V_H2_surplus = 50 * 0.0283168;         %(m^3) surplus volume of H2 added to balloon
+alt0 = 180;                   %(m) launch elevation
 m_balloon = 0;                          %(kg) measured balloon mass
 m_payload = 0;                          %(kg) measured payload mass
 
@@ -52,39 +55,34 @@ m_payload = 0;                          %(kg) measured payload mass
     m_balloon = balloon.m_balloon;
     m_payload = balloon.m_total - balloon.m_balloon;
 
-%determine hydrogen mass to fill
-syms m_H2 positive
-for n = 1:1:2
-    [rho_air,SOS,T,P,nu,ZorH]=stdatmo(alt0);   %SI  (standard atmosphere)
-    rho_H2 = P/(R_H2*T);                     %Ideal gas law, assume ambient pressure
-    m_system = m_balloon + m_payload;        %(kg) balloon and payload mass
-    W = (m_system + m_H2) * g;               %(N) total weight  --> f(m_H2)
-    Vmin = W/((rho_air - rho_H2) * g);       %(m^3) minimum hydrogen needed  --> f(m_H2)
-    V_H2_SL = Vmin + V_H2_surplus;           %(m^3) volume of hydrogen filled at SL --> f(m_H2)
+%determine hydrogen mass to fill at launch
+[rho_air,SOS,T,P,nu,ZorH]=stdatmo(alt0);   %SI  (standard atmosphere)
+rho_H2 = P/(R_H2*T);                     %Ideal gas law, assume ambient pressure
+m_system = m_balloon + m_payload;        %(kg) balloon and payload mass
+W = m_system * g;                        %(N) total weight
+Vmin = W/((rho_air - rho_H2) * g);       %(m^3) minimum hydrogen needed 
+V_H2_0 = Vmin + V_H2_surplus;           %(m^3) volume of hydrogen filled at SL 
+m_H2_0 = rho_H2 * V_H2_0;                 %(kg) mas of hydrogen filled at launch
 
-    if n==1
-        sol = solve(m_H2 == rho_H2 * V_H2_SL);
-        m_H2 = double(sol);
-    end
-end
 
 fprintf('\n');
-fprintf('Total Hydrogen to Fill = %f ft^3 \n',V_H2_SL * 35.3147);
+fprintf('Total Hydrogen to Fill = %f ft^3 \n',V_H2_0 * 35.3147);
 
 %run ode45 solver
-timerange = [0 10000];
-init = [alt0 0];
-options = odeset('Events',@detect_apogee);
-[t, outputs] = ode45(@ascent_calc, timerange, init, options, m_H2, m_system, balloon.V);
+timerange = [0 50000];
+init = [alt0, 0.001, m_H2_0];
+options = odeset('Events',@detect_apogee,'RelTol',1E-6);
+[t, outputs] = ode45(@ascent_calc, timerange, init, options, m_system, balloon.V);
 
 %extract outputs
 s = outputs(:,1);
 v = outputs(:,2);
+m_H2 = outputs(:,3);
 
 %run myfunc once last time to solve for dependant variables
 for n = 1:1:length(s)
-    inputs = [s(n), v(n)];
-    [outputs, data] = ascent_calc(t(n), inputs, m_H2, m_system, balloon.V);
+    inputs = [s(n), v(n), m_H2(n)];
+    [outputs, data] = ascent_calc(t(n), inputs, m_system, balloon.V);
     L(n) = data.L;
     W(n) = data.W;
     D(n) = data.D;
@@ -92,41 +90,58 @@ for n = 1:1:length(s)
     a(n) = data.a;
     Vgas(n) = data.Vgas;
     m_H2_real(n) = data.m_H2;
+    CD(n) = data.CD;
+    RE(n) = data.RE;
+    mdot_H2(n) = data.mdot_H2;
 end
+
+run C:\AMET\hab10_analysis\hab10
 
 %Make some plots
 figure(4)
-subplot(2,2,1)
+subplot(3,2,1)
 plot(t,s*3.28084)
 xlabel('time (s)')
 ylabel('altitude (ft)')
 grid on
+hold all
+plot(aprs.t0,aprs.altitude*3.28084)
+legend('simulated','actual')
 
-subplot(2,2,2)
+
+subplot(3,2,2)
 plot(t,L,t,W,t,D,t,Fnet)
 xlabel('time (s)')
 ylabel('Force (N)')
 grid on
 legend('Lift','Weight','Drag','Fnet')
 
-subplot(2,2,3)
+subplot(3,2,3)
 plot(t,v)
 xlabel('time (s)')
 ylabel('ascent rate (m/s)')
 grid on
+hold all
+plot(aprs.t0,gps_vv)
+legend('simulated','actual')
 
-subplot(2,2,4)
-plot(Vgas,s*3.28084)
-xlabel('Balloon Volume (m^3)')
-ylabel('Altitude (ft)')
+subplot(3,2,4)
+plot(t,Vgas)
+ylabel('Gas Volume (m^3)')
+xlabel('time (s)')
 grid on
 
+subplot(3,2,5)
+plot(t,m_H2)
+xlabel('time (s)')
+ylabel('Hydrogen Mass (kg)')
+grid on
 
-
-
-
-
-
+subplot(3,2,6)
+plot(t,mdot_H2)
+xlabel('time (s)')
+ylabel('rate of hydrogem mass loss (kg/s)')
+grid on
 
 
 
