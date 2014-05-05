@@ -34,3 +34,12 @@ clearvars -except balloon ascent
 %% Rockoon Launch
 run rockoon_launch
 
+rockoon.sz = sz;
+rockoon.long = long;
+rockoon.lat = lat;
+
+%clear all variables but balloon and ascent structs
+clearvars -except balloon ascent rockoon
+
+%% Formulate trajectory
+trajectory = [[ascent.s;rockoon.sz] [ascent.long'; rockoon.long'] [ascent.lat'; rockoon.lat']];

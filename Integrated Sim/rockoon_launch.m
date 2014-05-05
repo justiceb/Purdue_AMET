@@ -36,35 +36,35 @@ while (Fnet < 0)
 end
 
 %% sim initial conditions
-vx_wind_0 = interp1( wind.HGHT, wind.SKNT, sy_0, 'linear', 'extrap' );    %interpolate for ground course
-gc_wind_0 = interp1( wind.HGHT, wind.DRCT, sy_0, 'linear', 'extrap' );    %interpolate for ground course
+gs0 = interp1( wind.HGHT, wind.SKNT, alt0, 'linear', 'extrap' );    %interpolate for ground course
+gc0 = interp1( wind.HGHT, wind.DRCT, alt0, 'linear', 'extrap' );    %interpolate for ground course
 
 sx_0 = 0;
-sy_0 = alt0;
-vx_0 = vx_wind_0;
-vy_0 = 0.0000001;        %make really small value to init angle of attack
+sz_0 = alt0;
+vx_0 = gs0;
+vz_0 = 0.0000001;        %make really small value to init angle of attack
 theta_0 = 90;            %degrees
 theta_dot_0 = 0;         %degrees/sec
 t_end = 10000;               %(s) sim end time
 
 %% run ode45 solver
 timerange = [t_liftoff t_end];
-init = [sx_0, vx_0, sy_0, vy_0, theta_0, theta_dot_0];
+init = [sx_0, vx_0, sz_0, vz_0, theta_0, theta_dot_0];
 options = odeset('Events',@detect_rocket_apogee);
-[t, outputs] = ode45(@rockoon_calc, timerange, init, options, sy_0, rocksim, rasaero, wind, balloon_height, Drocket);
+[t, outputs] = ode45(@rockoon_calc, timerange, init, options, sz_0, rocksim, rasaero, wind, balloon_height, Drocket);
 
 %extract outputs
 sx = outputs(:,1);
 vx = outputs(:,2);
-sy = outputs(:,3);
-vy = outputs(:,4);
+sz = outputs(:,3);
+vz = outputs(:,4);
 theta = outputs(:,5);
 theta_dot = outputs(:,6);
 
 %run myfunc once last time to solve for dependant variables
 for n = 1:1:length(sx)
-    inputs = [sx(n), vx(n), sy(n), vy(n), theta(n), theta_dot(n)];
-    [outputs2, data] = rockoon_calc(t(n), inputs, sy_0, rocksim, rasaero, wind, balloon_height, Drocket);
+    inputs = [sx(n), vx(n), sz(n), vz(n), theta(n), theta_dot(n)];
+    [outputs2, data] = rockoon_calc(t(n), inputs, sz_0, rocksim, rasaero, wind, balloon_height, Drocket);
     alpha(n) = data.alpha;
     N(n) = data.N;
     D(n) = data.D;
@@ -73,14 +73,25 @@ for n = 1:1:length(sx)
     Torque(n) = data.Torque;
     M(n) = data.M;
     a(n) = data.a;
-    vy_sum(n) = data.vy_sum;
+    vz_sum(n) = data.vz_sum;
     vx_sum(n) = data.vx_sum;
-    ay(n) = data.ay;
+    az(n) = data.az;
     ax(n) = data.ax;
+    Tx(n) = data.Tx;
+    Tz(n) = data.Tz;
+    Dx(n) = data.Dx;
+    Dz(n) = data.Dz;
+    Nx(n) = data.Nx;
+    Nz(n) = data.Nz;
 end
 
 %% Formulate 3d trajectory
-
+r = sx;
+long0 = ascent.long(end);
+lat0 = ascent.lat(end);
+sxx = r*cosd(gc0+180);
+syy = r*sind(gc0+180);
+[ long, lat ] = dxdy_to_coordinates( sxx, syy, long0, lat0 );
 
 %% run plots
 figure(5)
@@ -101,7 +112,7 @@ legend('Torque','AOA')
 
 figure(7)
 subplot(2,2,1)
-plot(t,sy)
+plot(t,sz)
 xlabel('time (s)')
 ylabel('altitude (m)')
 grid on
@@ -124,6 +135,12 @@ xlabel('time (s)')
 ylabel('theta (deg)')
 grid on
 
+figure(8)
+plot(t,Tx,'r:',t,Tz,'r',t,Dx,'b:',t,Dz,'b',t,Nx,'k:',t,Nz,'k')
+xlabel('time (s)')
+ylabel('Force (n)')
+grid on
+legend('Tx','Tz','Dx','Dz','Nx','Nz')
 
 
 

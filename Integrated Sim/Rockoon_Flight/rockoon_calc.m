@@ -1,12 +1,12 @@
-function [outputs, data] = rockoon_calc(t, inputs, sy_0, rocksim, rasaero, wind, balloon_height, Drocket)
+function [outputs, data] = rockoon_calc(t, inputs, sz_0, rocksim, rasaero, wind, balloon_height, Drocket)
 
 %define inputs and outputs
-%inputs = [sx, vx, sy, vy, theta, theta_dot]
-%outputs = [vx, ax, vy, ay, theta_dot, theta_dot_dot]
+%inputs = [sx, vx, sz, vz, theta, theta_dot]
+%outputs = [vx, ax, vz, az, theta_dot, theta_dot_dot]
 sx = inputs(1);
 vx = inputs(2);
-sy = inputs(3);
-vy = inputs(4);
+sz = inputs(3);
+vz = inputs(4);
 theta = inputs(5);
 theta_dot = inputs(6);
 
@@ -19,13 +19,13 @@ R_air = 287.058;                     %specific gas constant air (SI)
 R_H2 = 4124;                         %specific gas constant hydrogen (SI)
 
 % Get wind data
-vx_wind = interp1( wind.HGHT, wind.SKNT, sy, 'linear', 'extrap' );    %interpolate for ground course
-vy_wind = 0;
+vx_wind = interp1( wind.HGHT, wind.SKNT, sz, 'linear', 'extrap' );    %interpolate for ground course
+vz_wind = 0;
 
 % get gaseous density and speed of sound
-[rho_air,a_air,temp_air,press_air,kvisc,ZorH]=stdatmo(sy);   %SI units
+[rho_air,a_air,temp_air,press_air,kvisc,ZorH]=stdatmo(sz);   %SI units
 
-if (sy-sy_0 <= balloon_height)              %if we are inside of the balloon
+if (sz-sz_0 <= balloon_height)              %if we are inside of the balloon
     rho = press_air/(R_H2 * temp_air);      %set gas density to hydrogen density
     a = sqrt(gamma_H2 * R_H2 * temp_air);   %set gas speed of sound to hydrogen speed of sound
     vx_wind = 0;                            %(m/s) wind x velocity at altitude
@@ -36,10 +36,10 @@ end
 
 % calculate freestream velocity and angle of attack
 vx_sum = vx + vx_wind;             %(m/s) get freestream velocity
-vy_sum = vy + vy_wind;             %(m/s) get freestream velocity
-v = norm([vx_sum vy_sum]);         %[m/s] velocity magnitude
+vz_sum = vz + vz_wind;             %(m/s) get freestream velocity
+v = norm([vx_sum vz_sum]);         %[m/s] velocity magnitude
 M = v/a;                           %freestream Mach
-v_theta = atan2d(vy_sum,vx_sum);   %[deg] polar angle 
+v_theta = atan2d(vz_sum,vx_sum);   %[deg] polar angle 
 alpha = v_theta - theta;           %[deg] angle of attack
 
 %interpolate RASAero for aerodynamics data
@@ -57,16 +57,16 @@ T = interp1(rocksim.Time1, rocksim.ThrustN, t);             %(N) engine thrust
 
 %determine ax, ay
 Tx = T*cosd(theta);
-Ty = T*sind(theta);
+Tz = T*sind(theta);
 Dx = -D*cosd(v_theta);
-Dy = -D*sind(v_theta);
+Dz = -D*sind(v_theta);
 FGx = 0;
-FGy = -Fg;
+FGz = -Fg;
 Nx = sign(alpha) * N*cosd(v_theta-90);
-Ny = sign(alpha) * N*sind(v_theta-90);
+Nz = sign(alpha) * N*sind(v_theta-90);
 
 ax = (Tx + Dx + FGx + Nx)/m_total;
-ay = (Ty + Dy + FGy + Ny)/m_total;
+az = (Tz + Dz + FGz + Nz)/m_total;
 
 %determine static margin
 CG = interp1(rocksim.Time1, rocksim.CGInches, t) * 0.0254;  %(m) to CG from nosecone
@@ -75,14 +75,14 @@ margin = CP - CG;                                           %(m) static margin
 %determine theta_dot_dot
 r = -[cosd(theta) , sind(theta) , 0];                                %points from CG to CP (useless magnitude)
 r = margin * r./norm(r);                                             %(m) displacement vector from CG to CP
-Torque = cross(r,[Dx Dy 0]) + cross(r,[Nx Ny 0]);                    %(N-m) torque caused by normal and drag forces
+Torque = cross(r,[Dx Dz 0]) + cross(r,[Nx Nz 0]);                    %(N-m) torque caused by normal and drag forces
 Torque = Torque(3);                                                  %(N-m) take torque scalar term
    I = interp1(rocksim.Time1, rocksim.Longitudinalmomentofinert, t); %
    I = I * 0.00001829;                                             %(kg-m^2) moment of inertia
 theta_dot_dot = (Torque / I)  *57.2957795;                           %deg/s/s
 
 %formulate function output
-outputs = [vx, ax, vy, ay, theta_dot, theta_dot_dot]';
+outputs = [vx, ax, vz, az, theta_dot, theta_dot_dot]';
 data.alpha = alpha;
 data.N = N;
 data.D = D;
@@ -91,10 +91,16 @@ data.T = T;
 data.Torque = Torque;
 data.M = M;
 data.a = a;
-data.vy_sum = vy_sum;
+data.vz_sum = vz_sum;
 data.vx_sum = vx_sum;
-data.ay = ay;
+data.az = az;
 data.ax = ax;
+data.Tx = Tx;
+data.Tz = Tz;
+data.Dx = Dx;
+data.Dz = Dz;
+data.Nx = Nx;
+data.Nz = Nz;
 end
 
 
