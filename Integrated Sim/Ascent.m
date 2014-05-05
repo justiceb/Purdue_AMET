@@ -11,7 +11,7 @@ at apogee.
 %}
 
 %% Inputs
-V_H2_surplus = 30 * 0.0283168;                          %(m^3) surplus volume of H2 added to balloon
+V_H2_surplus = 40 * 0.0283168;                          %(m^3) surplus volume of H2 added to balloon
 alt0 = 180;                                             %(m) launch elevation
 m_balloon = balloon.m_balloon;                          %(kg) measured balloon mass
 m_payload = balloon.m_total - balloon.m_balloon;        %(kg) measured payload mass
@@ -95,7 +95,6 @@ for n = 1:1:length(sx)
         lat(n) = lat(end) + dlat;
     end
 end
-
 trajectory = [s long' lat'];
 
 %run C:\AMET\hab10_analysis\hab10
@@ -145,7 +144,7 @@ ylabel('rate of hydrogem mass loss (kg/s)')
 grid on
 
 figure(4)
-color_line(sx*0.000621371,sy*0.000621371,s*3.28084)
+color_line(sx*0.000621371,sy*0.000621371,s*3.28084);
 axis equal
 xlabel('x-distance (miles)')
 ylabel('y-distance (miles)')
