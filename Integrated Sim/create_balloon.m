@@ -11,10 +11,22 @@
 %
 %           "Scientific Ballooning", Nobuyuki Yajima, Naoki Izutsu,
 %            Takeshi Imamura, Toyoo Abe
-%
+%{
+The balloon shape is determined early on in the design process with a
+predicted payload weight.  All of these design inputs are placed at the top
+of the create_balloon script file.  Once the balloon is created, these
+inputs cannot be changed.  However, we often find that the actual measured
+payload weight on the day of the launch is slightly different from the
+designed payload weight.  We also often find that the balloon weight is
+slightly different.  For the remainder of this integrated sim, we will use 
+these measure values for increased sim accuracy.  The only value that we
+extract from the balloon_shape sim is the balloon volume when fully 
+deployed.  This will stay relatively accurate for small deviations from
+the designed payload weight.
+%}
 
-%Inputs (Mission Criteria)
-rho_PE = 925;                 %kg/m^3  density of polyethlyene we purchased
+%% Inputs (Mission Criteria)
+rho_PE = 1000;                 %kg/m^3  density of polyethlyene we purchased
 thickness_PE = 18 * 1E-6;     %m  thickness of polyethylene we purchased
 Wpayload = 8*4.44822162;      %N  payload weight
 alt_apogee = 80000 * 0.3048;  %altitude at apogee (m)
@@ -26,7 +38,7 @@ R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
 goreTheta = (2*pi)/numGores;  %radians rotation per gore
 
-%float conditions (at apogee)
+%% float conditions (at apogee)
 [rho_air,a_apogee,T,P,nu,ZorH]=stdatmo(alt_apogee);   %SI  (standard atmosphere)
 rho_H2 = P/(R_H2*T);                           %Ideal gas law, assume ambient pressure
 a = 0;                                         %distance from zero pressure line to base (0 for apogee)
@@ -136,6 +148,7 @@ V_H2_SL = m_H2 / rho_H2_SL;                             %m^3 Hydrogen Volume at 
 %% Print outputs
 fprintf('balloon surface area = %f m^2 \n',S )
 fprintf('balloon volume = %f m^3 \n',V )
+fprintf('balloon volume = %f ft^3 \n',V *35.3147)
 fprintf('balloon mass = %f kg \n',S*wd )
 fprintf('payload mass = %f kg \n',Wpayload/g )
 fprintf('total weight = %f N \n',Wpayload+S*wd*g )
@@ -146,7 +159,8 @@ fprintf('angle at base = %f degrees  (shoot for -90) \n',theta(1)/ 0.0174532925 
 fprintf('radius at apex = %f m  (shoot for 0) \n',r(end) )
 fprintf('arclength of gore = %f m \n',s(end) )
 
-figure(1)
+f1 = figure(1);
+subplot(1,2,1)
 plot(r,z)
 xlabel('radius to center of balloon (m)')
 ylabel('distance from balloon base (m)')
@@ -174,7 +188,7 @@ for i=1:1:q-1
 end
 fprintf('arclength of gore (method 2)= %f m \n',lengthTot)
 
-figure(2)
+subplot(1,2,2)
 plot(Vwidth/2,Vlength,'--',-Vwidth/2,Vlength,'--')
 hold all
 plot(Vwidth/2+0.25,Vlength,-Vwidth/2-0.25,Vlength)
@@ -202,7 +216,7 @@ for j=1:nj
 end
 end
 
-figure(3)
+f2 = figure(2);
 surfl(yy,zz,xx)
 colormap(gray)
 axis('equal')

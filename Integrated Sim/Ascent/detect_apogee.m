@@ -1,4 +1,4 @@
-function [value,isterminal,direction] = detect_apogee(t, inputs, m_system, Vdeployed)
+function [value,isterminal,direction] = detect_apogee(t, inputs, m_system, Vdeployed, wind, dt)
 % Locate the time when height passes through zero in a decreasing direction
 % and stop integration.  
 v = inputs(2);    %(m/s)
