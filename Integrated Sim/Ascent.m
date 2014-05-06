@@ -25,7 +25,7 @@ R_H2 = 4124;                  %specific gas constant hydrogen (SI)
 r_earth = 6371000;            %(m) earth radius
 
 % Load wind config file
-wind = load_Wyoming_Sounding('12Z_19_April_2014.csv');
+wind = load_Wyoming_Sounding('12Z_05_May_2014.csv');
 
 %Modify Wind data to SI units and standard polar axes
 wind.SKNT = wind.SKNT*0.514444;              %convert windspeed to m/s

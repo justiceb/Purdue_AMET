@@ -41,5 +41,28 @@ rockoon.lat = lat;
 %clear all variables but balloon and ascent structs
 clearvars -except balloon ascent rockoon
 
+%% Descent
+run Descent
+
+descent.sz = sz;
+descent.long = long;
+descent.lat = lat;
+
+%clear all variables but balloon and ascent structs
+%clearvars -except balloon ascent rockoon descent
+
 %% Formulate trajectory
-trajectory = [[ascent.s;rockoon.sz] [ascent.long'; rockoon.long'] [ascent.lat'; rockoon.lat']];
+trajectory = [[ascent.s;rockoon.sz;descent.sz] [ascent.long'; rockoon.long'; descent.long'] [ascent.lat'; rockoon.lat'; descent.lat']];
+
+
+
+
+
+
+
+
+
+
+
+
+
