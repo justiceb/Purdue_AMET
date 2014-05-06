@@ -35,11 +35,11 @@ else                                        %if we are outside of the balloon
 end
 
 % calculate freestream velocity and angle of attack
-vx_sum = vx + vx_wind;             %(m/s) get freestream velocity
-vz_sum = vz + vz_wind;             %(m/s) get freestream velocity
-v = norm([vx_sum vz_sum]);         %[m/s] velocity magnitude
+vx_inf = vx_wind - vx;             %(m/s) get freestream velocity
+vz_inf = vz_wind - vz;             %(m/s) get freestream velocity
+v = norm([vx_inf vz_inf]);         %[m/s] velocity magnitude
 M = v/a;                           %freestream Mach
-v_theta = atan2d(vz_sum,vx_sum);   %[deg] polar angle 
+v_theta = atan2d(-vz_inf,-vx_inf);   %[deg] polar angle 
 alpha = v_theta - theta;           %[deg] angle of attack
 
 %interpolate RASAero for aerodynamics data
@@ -91,8 +91,8 @@ data.T = T;
 data.Torque = Torque;
 data.M = M;
 data.a = a;
-data.vz_sum = vz_sum;
-data.vx_sum = vx_sum;
+data.vz_inf = vz_inf;
+data.vx_inf = vx_inf;
 data.az = az;
 data.ax = ax;
 data.Tx = Tx;
