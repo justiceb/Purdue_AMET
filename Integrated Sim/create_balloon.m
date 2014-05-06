@@ -38,6 +38,10 @@ R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
 goreTheta = (2*pi)/numGores;  %radians rotation per gore
 
+%addpaths
+addpath Common_Functions
+addpath Balloon_Shape
+
 %% float conditions (at apogee)
 [rho_air,a_apogee,T,P,nu,ZorH]=stdatmo(alt_apogee);   %SI  (standard atmosphere)
 rho_H2 = P/(R_H2*T);                           %Ideal gas law, assume ambient pressure
