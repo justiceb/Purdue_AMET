@@ -1,4 +1,4 @@
-function [ long, lat, sz ] = descent_trajectory( long0, lat0, alt0, alt_end, wind, CD, Aref, m, vx0, vy0 )
+function [ long, lat, sz, data ] = descent_trajectory( long0, lat0, alt0, alt_end, wind, CD, Aref, m, vx0, vy0 )
 
 %% run ode45 solver
 sx0 = 0;
@@ -29,6 +29,10 @@ end
 
 %% Convert x,y distances to GPS coordinates
 [ long, lat ] = dxdy_to_coordinates( sx, sy, long0, lat0 );
+
+%% Package extra data we might want in the future
+data.vx = vx;
+data.vy = vy;
 
 end
 

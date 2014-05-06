@@ -11,25 +11,18 @@ at apogee.
 %}
 
 %% Inputs
-V_H2_surplus = 40 * 0.0283168;                          %(m^3) surplus volume of H2 added to balloon
-alt0 = 180;                                             %(m) launch elevation
+V_H2_surplus = input.V_H2_surplus;                      %(m^3) surplus volume of H2 added to balloon
 m_balloon = balloon.m_balloon;                          %(kg) measured balloon mass
-m_payload = balloon.m_total - balloon.m_balloon;        %(kg) measured payload mass
-lat0 =  40.416275;
-long0 = -86.944016;
+m_payload = balloon.m_payload;                          %(kg) measured payload mass
+lat0 =  input.lat0;
+long0 = input.long0;
+alt0 = input.alt0;                                      %(m) launch elevation
+wind = config.wind;
 
 %constant
 g = 9.81;                     %m/s/s
 R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
-r_earth = 6371000;            %(m) earth radius
-
-% Load wind config file
-wind = load_Wyoming_Sounding('12Z_05_May_2014.csv');
-
-%Modify Wind data to SI units and standard polar axes
-wind.SKNT = wind.SKNT*0.514444;              %convert windspeed to m/s
-wind.DRCT = -wind.DRCT+270;                   %convert to degrees where 0=east, 90=north
 
 %% determine hydrogen mass to fill at launch
 [rho_air,SOS,T,P,nu,ZorH]=stdatmo(alt0);   %SI  (standard atmosphere)
@@ -44,47 +37,49 @@ fprintf('\n');
 fprintf('Total Hydrogen to Fill = %f ft^3 \n',V_H2_0 * 35.3147);
 
 %% run ode45 solver
-%timerange = [0 50000];
-dt = 0.5; %s
+sx0 = 0;
+vx0 = 0;
+sy0 = 0;
+vy0 = 0;
+sz0 = alt0;
+vz0 = 0.001;
+init = [sx0, vx0, sy0, vy0, sz0, vz0, m_H2_0];
+dt = 1; %s
 timerange = 0:dt:50000;
-init = [alt0, 0.001, m_H2_0, 0, 0, 0, 0];
-options = odeset('Events',@detect_apogee,'RelTol',1E-6);
+options = odeset('Events',@detect_apogee,'RelTol',1E-3);
 [t, outputs] = ode45(@ascent_calc, timerange, init, options, m_system, balloon.V, wind, dt);
 
 %extract outputs
-s = outputs(:,1);
-v = outputs(:,2);
-m_H2 = outputs(:,3);
-sx = outputs(:,4);
-vx = outputs(:,5);
-sy = outputs(:,6);
-vy = outputs(:,7);
+sx = outputs(:,1);
+vx = outputs(:,2);
+sy = outputs(:,3);
+vy = outputs(:,4);
+sz = outputs(:,5);
+vz = outputs(:,6);
+m_H2 = outputs(:,7);
 
 %run myfunc once last time to solve for dependant variables
-for n = 1:1:length(s)
-    inputs = [s(n), v(n), m_H2(n), sx(n), vx(n), sy(n), vy(n)];
+for n = 1:1:length(sz)
+    inputs = [sx(n), vx(n), sy(n), vy(n), sz(n), vz(n), m_H2(n)];
     [outputs, data] = ascent_calc(t(n), inputs, m_system, balloon.V, wind, dt);
     L(n) = data.L;
     W(n) = data.W;
-    D(n) = data.D;
-    Fnet(n) = data.Fnet;
-    a(n) = data.a;
+    Dz(n) = data.Dz;
+    Fnet_z(n) = data.Fnet_z;
+    az(n) = data.az;
     Vgas(n) = data.Vgas;
-    m_H2_real(n) = data.m_H2;
-    CD(n) = data.CD;
-    RE(n) = data.RE;
     mdot_H2(n) = data.mdot_H2;
 end
 
 %% Convert x,y distances to GPS coordinates
 [ long, lat ] = dxdy_to_coordinates( sx, sy, long0, lat0 );
-trajectory = [s long' lat'];
+trajectory = [sz long' lat'];
 
 %run C:\AMET\hab10_analysis\hab10
 %% Make some plots
 f3 = figure(3);
 subplot(3,2,1)
-plot(t,s*3.28084)
+plot(t,sz*3.28084)
 xlabel('time (s)')
 ylabel('altitude (ft)')
 grid on
@@ -93,14 +88,14 @@ hold all
 %legend('simulated','actual')
 
 subplot(3,2,2)
-plot(t,L,t,W,t,D,t,Fnet)
+plot(t,L,t,W,t,Dz,t,Fnet_z)
 xlabel('time (s)')
 ylabel('Force (N)')
 grid on
 legend('Lift','Weight','Drag','Fnet')
 
 subplot(3,2,3)
-plot(t,v)
+plot(t,vz)
 xlabel('time (s)')
 ylabel('ascent rate (m/s)')
 grid on
@@ -127,7 +122,7 @@ ylabel('rate of hydrogem mass loss (kg/s)')
 grid on
 
 figure(4)
-color_line(sx*0.000621371,sy*0.000621371,s*3.28084);
+color_line(sx*0.000621371,sy*0.000621371,sz*3.28084);
 axis equal
 xlabel('x-distance (miles)')
 ylabel('y-distance (miles)')

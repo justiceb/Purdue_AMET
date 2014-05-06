@@ -1,12 +1,10 @@
 %% Inputs
-alt0 = ascent.s(end);             %(m)
+alt0 = ascent.sz(end);             %(m)
 balloon_height = balloon.z(end);  %(m) height of the balloon at deployment
-Drocket = 54 * 0.001;             %(m) rocket body diameter
-
-%load external data
-rasaero = load_RASAero_aeroplot1('RASAero_aeroplot1.csv');
-rocksim = load_rocksim('rocksim.csv');
-wind = ascent.wind;
+Drocket = input.Drocket;             %(m) rocket body diameter
+rasaero = config.rasaero;
+rocksim = config.rocksim;
+wind = config.wind;
 
 %% formulate 2d lookup table (input Mach and aoa)
 m = length(unique(rasaero.Mach));
@@ -86,11 +84,12 @@ for n = 1:1:length(sx)
 end
 
 %% Formulate 3d trajectory
-r = sx;
 long0 = ascent.long(end);
 lat0 = ascent.lat(end);
-sxx = r*cosd(gc0+180);
-syy = r*sind(gc0+180);
+sxx = sx*cosd(gc0+180);
+syy = sx*sind(gc0+180);
+vxx = vx*cosd(gc0+180);
+vyy = vx*sind(gc0+180);
 [ long, lat ] = dxdy_to_coordinates( sxx, syy, long0, lat0 );
 
 %% run plots
