@@ -137,9 +137,9 @@ ylabel('theta (deg)')
 grid on
 
 figure(8)
-plot(t,vx_inf,t,vx_wind,t,vx)
+plot(t,vx_inf*2.23694,t,vx_wind*2.23694,t,vx*2.23694)
 xlabel('time (s)')
-ylabel('Vx')
+ylabel('X-Velocity (mph)')
 grid on
 legend('vx-inf','vx-wind','vx')
 
@@ -149,8 +149,8 @@ axis equal
 xlabel('x-distance (miles)')
 ylabel('y-distance (miles)')
 title('Rocket Trajectory')
-t = colorbar('peer',gca);
-set(get(t,'ylabel'),'String', 'Altitude (feet)');
+cb = colorbar('peer',gca);
+set(get(cb,'ylabel'),'String', 'Altitude (feet)');
 grid on
 
 

@@ -19,13 +19,14 @@ input.alt_chute = 5000 * 0.3048;     %(m) parachute deployment altitude
 input.Dparachute = 36 * 0.0254;      %(m) parachute diameter
 
 %% Configs
-config.wind = load_Wyoming_Sounding('12Z_05_May_2014.csv');
+config.wind = load_Wyoming_Sounding('ILN_12Z_06_May_2014.csv');
 config.rasaero = load_RASAero_aeroplot1('RASAero_aeroplot1.csv');
 config.rocksim = load_rocksim('rocksim.csv');
 
 %Modify Config data
-config.wind.SKNT = config.wind.SKNT*0.514444;       %convert windspeed to m/s
-config.wind.DRCT = -config.wind.DRCT+270;           %convert to degrees where 0=east, 90=north
+config.wind.SKNT = config.wind.SKNT*0.514444;                         %convert windspeed to m/s
+config.wind.DRCT = -config.wind.DRCT+270;                             %convert to degrees where 0=east, 90=north
+config.wind.DRCT = unwrap(config.wind.DRCT*0.0174532925)*57.2957795;  %preserve angle continuity since we will be interpolating this data
 
 %% Balloon Shape
 run create_balloon
@@ -70,6 +71,7 @@ rockoon.vxx = vxx;
 rockoon.vyy = vyy;
 rockoon.gs = gs;
 rockoon.gc = gc;
+rockoon.t = t;
 
 %clear all variables but balloon and ascent structs
 clearvars -except input config balloon ascent rockoon
@@ -77,11 +79,14 @@ clearvars -except input config balloon ascent rockoon
 %% Descent
 run Descent
 
+descent.t1 = t1;
 descent.sx1 = sx1;
 descent.sy1 = sy1;
 descent.sz1 = sz1;
 descent.long1 = long1;
 descent.lat1 = lat1;
+
+descent.t2 = t2;
 descent.sx2 = sx2;
 descent.sy2 = sy2;
 descent.sz2 = sz2;
@@ -92,6 +97,10 @@ descent.lat2 = lat2;
 clearvars -except input config balloon ascent rockoon descent
 
 %% Formulate trajectory
+t = ascent.t;
+t = [t; t(end) + rockoon.t];
+t = [t; t(end) + descent.t1];
+t = [t; t(end) + descent.t2];
 sx = ascent.sx;
 sx = [sx; sx(end) + rockoon.sxx];
 sx = [sx; sx(end) + descent.sx1];
@@ -113,7 +122,7 @@ xlabels{1} = 'Ground Course (degrees)';
 xlabels{2} = 'Windspeed (mph)';
 ylabels{1} = 'Altitude (feet)';
 ylabels{2} = 'Altitude (feet)';
-[ax,L1,L2] = plotxx([ascent.gc, rockoon.gc], [ascent.sz; rockoon.sz]*3.28084, ...
+[ax,L1,L2] = plotxx(wraptopi([ascent.gc, rockoon.gc]*0.0174532925,0)*57.2957795, [ascent.sz; rockoon.sz]*3.28084, ...
                     [ascent.gs, rockoon.gs]*2.23694, [ascent.sz; rockoon.sz]*3.28084, ...
                     xlabels,ylabels);
 hold all
@@ -129,10 +138,15 @@ axis equal
 xlabel('x-distance (miles)')
 ylabel('y-distance (miles)')
 title('Mission Trajectory')
-t = colorbar('peer',gca);
-set(get(t,'ylabel'),'String', 'Altitude (feet)');
+cb = colorbar('peer',gca);
+set(get(cb,'ylabel'),'String', 'Altitude (feet)');
 grid on
 
+figure(12)
+plot(t*0.0166667,sz*3.28084)
+xlabel('t-time (minutes)')
+ylabel('Altitude (ft)')
+grid on
 
 
 

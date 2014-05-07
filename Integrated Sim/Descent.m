@@ -26,6 +26,7 @@ Aref = (CDf * Afin) + (CDbt * Arocket);
 [ long1, lat1, sz1, data1 ] = descent_trajectory( long0, lat0, alt0, alt_end, wind, CD, Aref, m, vx0, vy0 );
 sx1 = data1.sx;
 sy1 = data1.sy;
+t1 = data1.t;
 
 %% Parachute Descent
 %determine starting criteria from ending of drogue descent
@@ -44,7 +45,7 @@ Aref = pi * (Dparachute/2)^2;
 [ long2, lat2, sz2, data2 ] = descent_trajectory( long0, lat0, alt0, alt_end, wind, CD, Aref, m, vx0, vy0 );
 sx2 = data2.sx;
 sy2 = data2.sy;
-
+t2 = data2.t;
 
 
 

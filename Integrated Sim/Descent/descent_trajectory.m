@@ -35,6 +35,7 @@ data.vx = vx;
 data.vy = vy;
 data.sx = sx;
 data.sy = sy;
+data.t = t;
 
 end
 

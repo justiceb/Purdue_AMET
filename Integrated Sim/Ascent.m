@@ -129,8 +129,8 @@ axis equal
 xlabel('x-distance (miles)')
 ylabel('y-distance (miles)')
 title('Ascent Trajectory')
-t = colorbar('peer',gca);
-set(get(t,'ylabel'),'String', 'Altitude (feet)');
+cb = colorbar('peer',gca);
+set(get(cb,'ylabel'),'String', 'Altitude (feet)');
 grid on
 
 
