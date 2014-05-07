@@ -19,7 +19,9 @@ R_air = 287.058;                     %specific gas constant air (SI)
 R_H2 = 4124;                         %specific gas constant hydrogen (SI)
 
 % Get wind data
-vx_wind = interp1( wind.HGHT, wind.SKNT, sz, 'linear', 'extrap' );    %interpolate for ground course
+gs = interp1( wind.HGHT, wind.SKNT, sz, 'linear', 'extrap' );    %interpolate for ground speed
+gc = interp1( wind.HGHT, wind.DRCT, sz, 'linear', 'extrap');    %interpolate for ground course
+vx_wind = gs;
 vz_wind = 0;
 
 % get gaseous density and speed of sound
@@ -28,7 +30,7 @@ vz_wind = 0;
 if (sz-sz_0 <= balloon_height)              %if we are inside of the balloon
     rho = press_air/(R_H2 * temp_air);      %set gas density to hydrogen density
     a = sqrt(gamma_H2 * R_H2 * temp_air);   %set gas speed of sound to hydrogen speed of sound
-    vx_wind = 0;                            %(m/s) wind x velocity at altitude
+    vx_wind = vx;                            %(m/s) wind x velocity at altitude
 else                                        %if we are outside of the balloon
     rho = rho_air;                          %use air density
     a = a_air;                              %use air speed of sound
@@ -93,6 +95,7 @@ data.M = M;
 data.a = a;
 data.vz_inf = vz_inf;
 data.vx_inf = vx_inf;
+data.vx_wind = vx_wind;
 data.az = az;
 data.ax = ax;
 data.Tx = Tx;
@@ -101,6 +104,8 @@ data.Dx = Dx;
 data.Dz = Dz;
 data.Nx = Nx;
 data.Nz = Nz;
+data.gc = gc;
+data.gs = gs;
 end
 
 

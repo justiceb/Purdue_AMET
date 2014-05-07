@@ -33,6 +33,8 @@ end
 %% Package extra data we might want in the future
 data.vx = vx;
 data.vy = vy;
+data.sx = sx;
+data.sy = sy;
 
 end
 

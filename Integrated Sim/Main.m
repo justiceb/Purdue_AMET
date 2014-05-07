@@ -43,11 +43,17 @@ clearvars -except input config balloon
 run Ascent
 
 %determine variables to keep
+ascent.sx = sx;
+ascent.sy = sy;
 ascent.sz = sz;
 ascent.vz = vz;
 ascent.t = t;
 ascent.lat = lat;
 ascent.long = long;
+ascent.gs = gs;
+ascent.gc = gc;
+ascent.vx = vx;
+ascent.vy = vy;
 
 %clear all variables but balloon and ascent structs
 clearvars -except input config balloon ascent
@@ -55,11 +61,15 @@ clearvars -except input config balloon ascent
 %% Rockoon Launch
 run rockoon_launch
 
+rockoon.sxx = sxx;
+rockoon.syy = syy;
 rockoon.sz = sz;
 rockoon.long = long;
 rockoon.lat = lat;
 rockoon.vxx = vxx;
 rockoon.vyy = vyy;
+rockoon.gs = gs;
+rockoon.gc = gc;
 
 %clear all variables but balloon and ascent structs
 clearvars -except input config balloon ascent rockoon
@@ -67,26 +77,61 @@ clearvars -except input config balloon ascent rockoon
 %% Descent
 run Descent
 
+descent.sx1 = sx1;
+descent.sy1 = sy1;
 descent.sz1 = sz1;
 descent.long1 = long1;
 descent.lat1 = lat1;
+descent.sx2 = sx2;
+descent.sy2 = sy2;
 descent.sz2 = sz2;
 descent.long2 = long2;
 descent.lat2 = lat2;
 
 %clear all variables but balloon and ascent structs
-%clearvars -except input config balloon ascent rockoon descent
+clearvars -except input config balloon ascent rockoon descent
 
 %% Formulate trajectory
-trajectory = [[ascent.sz; rockoon.sz; descent.sz1; descent.sz2] ...
-              [ascent.long'; rockoon.long'; descent.long1'; descent.long2'] ...
-              [ascent.lat'; rockoon.lat'; descent.lat1'; descent.lat2']];
+sx = ascent.sx;
+sx = [sx; sx(end) + rockoon.sxx];
+sx = [sx; sx(end) + descent.sx1];
+sx = [sx; sx(end) + descent.sx2];
+sy = ascent.sy;
+sy = [sy; sy(end) + rockoon.syy];
+sy = [sy; sy(end) + descent.sy1];
+sy = [sy; sy(end) + descent.sy2];
+sz = [ascent.sz; rockoon.sz; descent.sz1; descent.sz2];
+long = [ascent.long'; rockoon.long'; descent.long1'; descent.long2'];
+lat = [ascent.lat'; rockoon.lat'; descent.lat1'; descent.lat2'];
 
+trajectory = [sz, long, lat];
 
+%% Plots
 
+figure(10)
+xlabels{1} = 'Ground Course (degrees)';
+xlabels{2} = 'Windspeed (mph)';
+ylabels{1} = 'Altitude (feet)';
+ylabels{2} = 'Altitude (feet)';
+[ax,L1,L2] = plotxx([ascent.gc, rockoon.gc], [ascent.sz; rockoon.sz]*3.28084, ...
+                    [ascent.gs, rockoon.gs]*2.23694, [ascent.sz; rockoon.sz]*3.28084, ...
+                    xlabels,ylabels);
+hold all
+L3 = plot(get(gca,'xlim'), rockoon.sz(1)*ones(1,2)*3.28084 ); %plot horizontal line
+L4 = plot(get(gca,'xlim'), rockoon.sz(end)*ones(1,2)*3.28084 ); %plot horizontal line
+legend([L3 L4],'Rocket Launch','Rocket Apogee')
+title('Sounding Wind Data')
+grid on
 
-
-
+figure(11)
+color_line(sx*0.000621371,sy*0.000621371,sz*3.28084);
+axis equal
+xlabel('x-distance (miles)')
+ylabel('y-distance (miles)')
+title('Mission Trajectory')
+t = colorbar('peer',gca);
+set(get(t,'ylabel'),'String', 'Altitude (feet)');
+grid on
 
 
 

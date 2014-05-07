@@ -24,6 +24,8 @@ Aref = (CDf * Afin) + (CDbt * Arocket);
 
 % Run ODE45 solver
 [ long1, lat1, sz1, data1 ] = descent_trajectory( long0, lat0, alt0, alt_end, wind, CD, Aref, m, vx0, vy0 );
+sx1 = data1.sx;
+sy1 = data1.sy;
 
 %% Parachute Descent
 %determine starting criteria from ending of drogue descent
@@ -39,8 +41,9 @@ CD = 1.5;
 Aref = pi * (Dparachute/2)^2;
 
 % Run ODE45 solver
-[ long2, lat2, sz2 ] = descent_trajectory( long0, lat0, alt0, alt_end, wind, CD, Aref, m, vx0, vy0 );
-
+[ long2, lat2, sz2, data2 ] = descent_trajectory( long0, lat0, alt0, alt_end, wind, CD, Aref, m, vx0, vy0 );
+sx2 = data2.sx;
+sy2 = data2.sy;
 
 
 

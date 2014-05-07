@@ -39,7 +39,7 @@ gc0 = interp1( wind.HGHT, wind.DRCT, alt0, 'linear', 'extrap' );    %interpolate
 
 sx_0 = 0;
 sz_0 = alt0;
-vx_0 = gs0;
+vx_0 = norm(ascent.vx(end), ascent.vy(end));
 vz_0 = 0.0001;        %make really small value to init angle of attack
 theta_0 = 90;            %degrees
 theta_dot_0 = 0;         %degrees/sec
@@ -73,6 +73,7 @@ for n = 1:1:length(sx)
     a(n) = data.a;
     vz_inf(n) = data.vz_inf;
     vx_inf(n) = data.vx_inf;
+    vx_wind(n) = data.vx_wind;
     az(n) = data.az;
     ax(n) = data.ax;
     Tx(n) = data.Tx;
@@ -81,19 +82,34 @@ for n = 1:1:length(sx)
     Dz(n) = data.Dz;
     Nx(n) = data.Nx;
     Nz(n) = data.Nz;
+    gs(n) = data.gs;
+    gc(n) = data.gc;
 end
 
 %% Formulate 3d trajectory
 long0 = ascent.long(end);
 lat0 = ascent.lat(end);
-sxx = sx*cosd(gc0+180);
-syy = sx*sind(gc0+180);
-vxx = vx*cosd(gc0+180);
-vyy = vx*sind(gc0+180);
+sxx = sx*cosd(gc0);
+syy = sx*sind(gc0);
+vxx = vx*cosd(gc0);
+vyy = vx*sind(gc0);
 [ long, lat ] = dxdy_to_coordinates( sxx, syy, long0, lat0 );
 
 %% run plots
-figure(5)
+figure(7)
+subplot(3,2,1)
+plot(t,sz)
+xlabel('time (s)')
+ylabel('altitude (m)')
+grid on
+
+subplot(3,2,2)
+plot(t,M)
+xlabel('time (s)')
+ylabel('Mach Number')
+grid on
+
+subplot(3,2,3)
 plot(t,T,t,D,t,N,t,Fg)
 title('when launched from 70k ft')
 xlabel('time (s)')
@@ -101,52 +117,40 @@ ylabel('force (N)')
 grid on
 legend('T','D','N','Fg')
 
-figure(6)
-plot(t,Torque,t,alpha)
-title('when launched from 70k ft')
-xlabel('time (s)')
-ylabel('Torque (N-M), AOA (degrees)')
-grid on
-legend('Torque','AOA')
-
-figure(7)
-subplot(2,2,1)
-plot(t,sz)
-xlabel('time (s)')
-ylabel('altitude (m)')
-grid on
-
-subplot(2,2,2)
-plot(t,M)
-xlabel('time (s)')
-ylabel('Mach Number')
-grid on
-
-subplot(2,2,3)
-plot(t,alpha)
-xlabel('time (s)')
-ylabel('AOA (deg)')
-grid on
-
-subplot(2,2,4)
-plot(t, theta)
-xlabel('time (s)')
-ylabel('theta (deg)')
-grid on
-
-figure(8)
+subplot(3,2,4)
 plot(t,Tx,'r:',t,Tz,'r',t,Dx,'b:',t,Dz,'b',t,Nx,'k:',t,Nz,'k')
 xlabel('time (s)')
 ylabel('Force (n)')
 grid on
 legend('Tx','Tz','Dx','Dz','Nx','Nz')
 
+subplot(3,2,5)
+plot(t,alpha)
+xlabel('time (s)')
+ylabel('AOA (deg)')
+grid on
 
+subplot(3,2,6)
+plot(t, theta)
+xlabel('time (s)')
+ylabel('theta (deg)')
+grid on
 
+figure(8)
+plot(t,vx_inf,t,vx_wind,t,vx)
+xlabel('time (s)')
+ylabel('Vx')
+grid on
+legend('vx-inf','vx-wind','vx')
 
-
-
-
-
+figure(9)
+color_line(sxx*0.000621371,syy*0.000621371,sz*3.28084);
+axis equal
+xlabel('x-distance (miles)')
+ylabel('y-distance (miles)')
+title('Rocket Trajectory')
+t = colorbar('peer',gca);
+set(get(t,'ylabel'),'String', 'Altitude (feet)');
+grid on
 
 

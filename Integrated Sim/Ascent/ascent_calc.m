@@ -79,6 +79,8 @@ data.az = az;
 data.Vgas = Vgas;
 data.m_H2 = m_H2;
 data.mdot_H2 = mdot_H2;
+data.gc = gc;
+data.gs = gs;
 end
 
 

@@ -69,6 +69,8 @@ for n = 1:1:length(sz)
     az(n) = data.az;
     Vgas(n) = data.Vgas;
     mdot_H2(n) = data.mdot_H2;
+    gc(n) = data.gc;
+    gs(n) = data.gs;
 end
 
 %% Convert x,y distances to GPS coordinates
@@ -126,14 +128,10 @@ color_line(sx*0.000621371,sy*0.000621371,sz*3.28084);
 axis equal
 xlabel('x-distance (miles)')
 ylabel('y-distance (miles)')
+title('Ascent Trajectory')
 t = colorbar('peer',gca);
 set(get(t,'ylabel'),'String', 'Altitude (feet)');
 grid on
-
-
-
-
-
 
 
 
