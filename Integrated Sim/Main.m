@@ -62,17 +62,6 @@ clearvars -except input config balloon ascent
 %% Rockoon Launch
 run rockoon_launch
 
-rockoon.sxx = sxx;
-rockoon.syy = syy;
-rockoon.sz = sz;
-rockoon.long = long;
-rockoon.lat = lat;
-rockoon.vxx = vxx;
-rockoon.vyy = vyy;
-rockoon.gs = gs;
-rockoon.gc = gc;
-rockoon.t = t;
-
 %clear all variables but balloon and ascent structs
 clearvars -except input config balloon ascent rockoon
 

@@ -1,4 +1,4 @@
-function [outputs, data] = rockoon_calc(t, inputs, sz_0, rocksim, rasaero, wind, balloon_height, Drocket)
+function [outputs, data] = rocket_ODE(t, inputs, sz_0, rocksim, rasaero, wind, balloon_height, Drocket)
 
 %define inputs and outputs
 %inputs = [sx, vx, sz, vz, theta, theta_dot]

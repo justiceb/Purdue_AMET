@@ -1,116 +1,49 @@
-%% Inputs
-alt0 = ascent.sz(end);             %(m)
-balloon_height = balloon.z(end);  %(m) height of the balloon at deployment
-Drocket = input.Drocket;             %(m) rocket body diameter
+%% Prepare variabels and run ODE sim
+sx_0 = 0;
+vx_0 = norm(ascent.vx(end), ascent.vy(end));
+sz_0 = ascent.sz(end);
+vz_0 =  0.0001;        %make really small value to init angle of attack
+theta_0 = 90;           %degrees
+theta_dot_0 = 0;         %degrees/sec
+init_ODE = [sx_0, vx_0, sz_0, vz_0, theta_0, theta_dot_0];
 rasaero = config.rasaero;
 rocksim = config.rocksim;
 wind = config.wind;
+rocket.D = input.Drocket;
+balloon_input.height = balloon.z(end);
 
-%% formulate 2d lookup table (input Mach and aoa)
-m = length(unique(rasaero.Mach));
-n = length(unique(rasaero.alpha_deg));
-
-rasaero.Mach = reshape(rasaero.Mach,m,n)';
-rasaero.alpha_deg = reshape(rasaero.alpha_deg,m,n)';
-rasaero.CD = reshape(rasaero.CD,m,n)';
-rasaero.CN = reshape(rasaero.CN,m,n)';
-rasaero.CP = reshape(rasaero.CP,m,n)';
-
-%% find time of liftoff
-t_liftoff = 0;
-Fnet = -1;
-while (Fnet < 0)
-    
-    %find rocket mass and thrust
-    m_total = interp1(rocksim.Time1, rocksim.MassOunces, t_liftoff); %(ounces) total rocket mass
-    m_total = m_total * 0.0283495;                                   %(kg) total rocket mass
-    T = interp1(rocksim.Time1, rocksim.ThrustN, t_liftoff);                  %(N) engine thrust
-
-    %find Fnet
-    Fnet = T - m_total * 9.81;                                       %(N) net thrust in vertical direction
-    
-    %increment timestep
-    t_liftoff = t_liftoff + 0.01;
-end
-
-%% sim initial conditions
-gs0 = interp1( wind.HGHT, wind.SKNT, alt0, 'linear', 'extrap' );    %interpolate for ground course
-gc0 = interp1( wind.HGHT, wind.DRCT, alt0, 'linear', 'extrap' );    %interpolate for ground course
-
-sx_0 = 0;
-sz_0 = alt0;
-vx_0 = norm(ascent.vx(end), ascent.vy(end));
-vz_0 = 0.0001;        %make really small value to init angle of attack
-theta_0 = 90;            %degrees
-theta_dot_0 = 0;         %degrees/sec
-t_end = 10000;               %(s) sim end time
-
-%% run ode45 solver
-timerange = [t_liftoff t_end];
-init = [sx_0, vx_0, sz_0, vz_0, theta_0, theta_dot_0];
-options = odeset('Events',@detect_rocket_apogee);
-[t, outputs] = ode45(@rockoon_calc, timerange, init, options, sz_0, rocksim, rasaero, wind, balloon_height, Drocket);
-
-%extract outputs
-sx = outputs(:,1);
-vx = outputs(:,2);
-sz = outputs(:,3);
-vz = outputs(:,4);
-theta = outputs(:,5);
-theta_dot = outputs(:,6);
-
-%run myfunc once last time to solve for dependant variables
-for n = 1:1:length(sx)
-    inputs = [sx(n), vx(n), sz(n), vz(n), theta(n), theta_dot(n)];
-    [outputs2, data] = rockoon_calc(t(n), inputs, sz_0, rocksim, rasaero, wind, balloon_height, Drocket);
-    alpha(n) = data.alpha;
-    N(n) = data.N;
-    D(n) = data.D;
-    Fg(n) = data.Fg;
-    T(n) = data.T;
-    Torque(n) = data.Torque;
-    M(n) = data.M;
-    a(n) = data.a;
-    vz_inf(n) = data.vz_inf;
-    vx_inf(n) = data.vx_inf;
-    vx_wind(n) = data.vx_wind;
-    az(n) = data.az;
-    ax(n) = data.ax;
-    Tx(n) = data.Tx;
-    Tz(n) = data.Tz;
-    Dx(n) = data.Dx;
-    Dz(n) = data.Dz;
-    Nx(n) = data.Nx;
-    Nz(n) = data.Nz;
-    gs(n) = data.gs;
-    gc(n) = data.gc;
-end
+rockoon = rocket_ODE_wrapper(init_ODE, rasaero, rocksim, wind, rocket, balloon_input);
 
 %% Formulate 3d trajectory
+gs0 = interp1( wind.HGHT, wind.SKNT, sz_0, 'linear', 'extrap' );    %interpolate for ground course
+gc0 = interp1( wind.HGHT, wind.DRCT, sz_0, 'linear', 'extrap' );    %interpolate for ground course
+
 long0 = ascent.long(end);
 lat0 = ascent.lat(end);
-sxx = sx*cosd(gc0);
-syy = sx*sind(gc0);
-vxx = vx*cosd(gc0);
-vyy = vx*sind(gc0);
-[ long, lat ] = dxdy_to_coordinates( sxx, syy, long0, lat0 );
+rockoon.sxx = rockoon.sx*cosd(gc0);
+rockoon.syy = rockoon.sx*sind(gc0);
+rockoon.vxx = rockoon.vx*cosd(gc0);
+rockoon.vyy = rockoon.vx*sind(gc0);
+[ rockoon.long, rockoon.lat ] = dxdy_to_coordinates( rockoon.sxx, rockoon.syy, long0, lat0 );
 
 %% run plots
+t = rockoon.t;
+
 figure(7)
 subplot(3,2,1)
-plot(t,sz)
+plot(t,rockoon.sz)
 xlabel('time (s)')
 ylabel('altitude (m)')
 grid on
 
 subplot(3,2,2)
-plot(t,M)
+plot(t,rockoon.M)
 xlabel('time (s)')
 ylabel('Mach Number')
 grid on
 
 subplot(3,2,3)
-plot(t,T,t,D,t,N,t,Fg)
+plot(t,rockoon.T,t,rockoon.D,t,rockoon.N,t,rockoon.Fg)
 title('when launched from 70k ft')
 xlabel('time (s)')
 ylabel('force (N)')
@@ -118,33 +51,33 @@ grid on
 legend('T','D','N','Fg')
 
 subplot(3,2,4)
-plot(t,Tx,'r:',t,Tz,'r',t,Dx,'b:',t,Dz,'b',t,Nx,'k:',t,Nz,'k')
+plot(t,rockoon.Tx,'r:',t,rockoon.Tz,'r',t,rockoon.Dx,'b:',t,rockoon.Dz,'b',t,rockoon.Nx,'k:',t,rockoon.Nz,'k')
 xlabel('time (s)')
 ylabel('Force (n)')
 grid on
 legend('Tx','Tz','Dx','Dz','Nx','Nz')
 
 subplot(3,2,5)
-plot(t,alpha)
+plot(t,rockoon.alpha)
 xlabel('time (s)')
 ylabel('AOA (deg)')
 grid on
 
 subplot(3,2,6)
-plot(t, theta)
+plot(t, rockoon.theta)
 xlabel('time (s)')
 ylabel('theta (deg)')
 grid on
 
 figure(8)
-plot(t,vx_inf*2.23694,t,vx_wind*2.23694,t,vx*2.23694)
+plot(t,rockoon.vx_inf*2.23694,t,rockoon.vx_wind*2.23694,t,rockoon.vx*2.23694)
 xlabel('time (s)')
 ylabel('X-Velocity (mph)')
 grid on
 legend('vx-inf','vx-wind','vx')
 
 figure(9)
-color_line(sxx*0.000621371,syy*0.000621371,sz*3.28084);
+color_line(rockoon.sxx*0.000621371,rockoon.syy*0.000621371,rockoon.sz*3.28084);
 axis equal
 xlabel('x-distance (miles)')
 ylabel('y-distance (miles)')
