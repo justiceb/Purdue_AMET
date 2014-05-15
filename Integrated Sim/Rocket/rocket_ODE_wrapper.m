@@ -21,7 +21,7 @@ function data = rocket_ODE_wrapper(init_ODE, rasaero, rocksim, wind, rocket, bal
 
 %% check function inputs
 if ~isfield(balloon,'height')
-    balloon.height = 0
+    balloon.height = 0;
 end
 
 %% formulate 2d RASAero lookup table

@@ -1,10 +1,6 @@
-run clc; clear; close all
+clc; clear; close all;
 addpath Common_Functions
-addpath_recurse('Config_Files')
-addpath Balloon_Shape
-addpath Ascent
-addpath Rockoon_Flight
-addpath Descent
+addpath_recurse(pwd)
 
 %% Inputs
 input.m_payload = 0;                 %(kg)
