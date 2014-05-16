@@ -19,7 +19,7 @@ R_air = 287.058;                     %specific gas constant air (SI)
 R_H2 = 4124;                         %specific gas constant hydrogen (SI)
 
 % Get wind data
-gs = interp1( wind.HGHT, wind.SKNT, sz, 'linear', 'extrap' );    %interpolate for ground speed
+gs = interp1( wind.HGHT, wind.SPEED, sz, 'linear', 'extrap' );    %interpolate for ground speed
 gc = interp1( wind.HGHT, wind.DRCT, sz, 'linear', 'extrap');    %interpolate for ground course
 vx_wind = gs;
 vz_wind = 0;

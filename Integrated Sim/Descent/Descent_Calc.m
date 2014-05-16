@@ -24,7 +24,7 @@ az = Fnet_z/m;
 
 %% Wind Properties
 gc = interp1( wind.HGHT, wind.DRCT, sz, 'linear', 'extrap');     %interpolate for ground course
-gs = interp1( wind.HGHT, wind.SKNT, sz, 'linear', 'extrap' );    %interpolate for groundspeed
+gs = interp1( wind.HGHT, wind.SPEED, sz, 'linear', 'extrap' );    %interpolate for groundspeed
 
 vx_wind = gs * cosd(gc);  %(m/s) x-axis velocity during this time slice
 vy_wind = gs * sind(gc);  %(m/s) y-axis velocity during this time slice

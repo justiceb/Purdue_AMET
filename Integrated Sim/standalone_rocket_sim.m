@@ -8,11 +8,6 @@ rasaero = load_RASAero_aeroplot1('RASAero_aeroplot1.csv');
 rocksim = load_rocksim('rocksim.csv');
 Rsim = load_rasaero_sim('rasaero_sim.CSV');
 
-%Modify Config data
-wind.SKNT = wind.SKNT*0.514444;                         %convert windspeed to m/s
-wind.DRCT = -wind.DRCT+270;                             %convert to degrees where 0=east, 90=north
-wind.DRCT = unwrap(wind.DRCT*0.0174532925)*57.2957795;  %preserve angle continuity since we will be interpolating this data
-
 %% Prepare variabels and run ODE sim
 sx_0 = 0;
 vx_0 = 0;

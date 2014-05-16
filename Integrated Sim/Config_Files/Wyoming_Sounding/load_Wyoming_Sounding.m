@@ -64,15 +64,20 @@ fclose(fileID);
 % script.
 
 %% Allocate imported array to column variable names
-data.PRES = dataArray{:, 1};   %hPa
-data.HGHT = dataArray{:, 2};   %m
-data.TEMP1 = dataArray{:, 3};  %C
-data.DWPT = dataArray{:, 4};   %C
-data.RELH = dataArray{:, 5};   %%
-data.MIXR = dataArray{:, 6};   %g/kg
-data.DRCT = dataArray{:, 7};   %deg
-data.SKNT = dataArray{:, 8};   %knot
-data.THTA = dataArray{:, 9};   %K
-data.THTE = dataArray{:, 10};  %K
-data.THTV = dataArray{:, 11};  %K
+data.PRES = dataArray{:, 1}*100; %Pa
+data.HGHT = dataArray{:, 2};     %m
+data.TEMP1 = dataArray{:, 3};    %C
+data.DWPT = dataArray{:, 4};     %C
+data.RELH = dataArray{:, 5};     %%
+data.MIXR = dataArray{:, 6};     %g/kg
+data.DRCT = dataArray{:, 7};     %deg
+data.SPEED = dataArray{:, 8};    %knot
+data.THTA = dataArray{:, 9};     %K
+data.THTE = dataArray{:, 10};    %K
+data.THTV = dataArray{:, 11};    %K
+
+%modify raw config data before passing it
+data.SPEED = data.SPEED*0.514444;                         %convert windspeed to m/s
+data.DRCT = -data.DRCT+270;                             %convert to degrees where 0=east, 90=north
+data.DRCT = unwrap(data.DRCT*0.0174532925)*57.2957795;  %preserve angle continuity since we will be interpolating this data
 

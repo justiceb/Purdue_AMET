@@ -19,11 +19,6 @@ config.wind = load_Wyoming_Sounding('ILN_12Z_06_May_2014.csv');
 config.rasaero = load_RASAero_aeroplot1('RASAero_aeroplot1.csv');
 config.rocksim = load_rocksim('rocksim.csv');
 
-%Modify Config data
-config.wind.SKNT = config.wind.SKNT*0.514444;                         %convert windspeed to m/s
-config.wind.DRCT = -config.wind.DRCT+270;                             %convert to degrees where 0=east, 90=north
-config.wind.DRCT = unwrap(config.wind.DRCT*0.0174532925)*57.2957795;  %preserve angle continuity since we will be interpolating this data
-
 %% Balloon Shape
 run create_balloon
 

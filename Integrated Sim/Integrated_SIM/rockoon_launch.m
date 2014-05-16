@@ -15,7 +15,7 @@ balloon_input.height = balloon.z(end);
 rockoon = rocket_ODE_wrapper(init_ODE, rasaero, rocksim, wind, rocket, balloon_input);
 
 %% Formulate 3d trajectory
-gs0 = interp1( wind.HGHT, wind.SKNT, sz_0, 'linear', 'extrap' );    %interpolate for ground course
+gs0 = interp1( wind.HGHT, wind.SPEED, sz_0, 'linear', 'extrap' );    %interpolate for ground course
 gc0 = interp1( wind.HGHT, wind.DRCT, sz_0, 'linear', 'extrap' );    %interpolate for ground course
 
 long0 = ascent.long(end);
