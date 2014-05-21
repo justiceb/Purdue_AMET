@@ -2,35 +2,35 @@ function [ aprs ] = APRS_analyze( file, plots)
 % Author - Brent Justice 5/21/2014
 % This function analyzes an APRS dataset
 % INPUTS:
-%         file = string name of APRS file EX --> 'aprs_export.csv'
+%         file = string name of APRS file EX --> 'aprs_export_example.csv'
 %                note that the APRS file MUST have the t0 column
 %                with the following excel formula: =(A2-DATE(1970,1,1))*86400
 %         plots == 1 if user wants function to draw plots
 %
 
-%% Include external functions
+% Include external functions
 addpath sub_functions
 
-%% load APRS dataset
+% load APRS dataset
 aprs = load_aprs(file);                    %load aprs data
 
-%% Determine Apogee
+% Determine Apogee
 [~,Iapogee] = max(aprs.altitude);
 
-%% Calculate vertical velocity
+% Calculate vertical velocity
 aprs.vz(1) = 0;                                                 %(m/s)
 for n = 2:1:length(aprs.t0)
    dt = aprs.t0(n) - aprs.t0(n-1);
    aprs.vz(n) = (aprs.altitude(n) - aprs.altitude(n-1) )/dt;   %(m/s)
 end
 
-%% Determine Horizontal Distances
+% Determine Horizontal Distances
 [ aprs.sx, aprs.sy ] = coordinates_to_dxdy( aprs.lng, aprs.lat );
 
-%% Prepare trajectory for google earth inut
+% Prepare trajectory for google earth inut
 aprs.trajectory = [aprs.altitude, aprs.lng, aprs.lat];
 
-%% Plots
+% Plots
 if plots == 1
     figure(1)
     plot(aprs.t0_hrs,aprs.altitudeFT)
