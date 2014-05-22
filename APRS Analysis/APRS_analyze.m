@@ -8,9 +8,6 @@ function [ aprs ] = APRS_analyze( file, plots)
 %         plots == 1 if user wants function to draw plots
 %
 
-% Include external functions
-addpath sub_functions
-
 % load APRS dataset
 aprs = load_aprs(file);                    %load aprs data
 
@@ -33,10 +30,11 @@ aprs.trajectory = [aprs.altitude, aprs.lng, aprs.lat];
 % Plots
 if plots == 1
     figure(1)
-    plot(aprs.t0_hrs,aprs.altitudeFT)
+    plot(aprs.t0_hrs,aprs.altitudeFT,'-o')
     xlabel('time (hours)')
     ylabel('Altitude (ft)')
     grid on
+    title('APRS GPS Altitude')
 
     figure(2)
     plot(aprs.t0_hrs(1:Iapogee),aprs.vz(1:Iapogee),...
@@ -46,6 +44,7 @@ if plots == 1
     ylabel('Vertical Velocity (m/s)')
     grid on
     legend('Ascent','Apogee','Descent')
+    title('APRS GPS Ascent/Descent Rate')
 
     figure(3)
     xlabels{1} = 'Ground Course (degrees)';
@@ -55,7 +54,7 @@ if plots == 1
     [ax,L1,L2] = plotxx(aprs.course(1:Iapogee), aprs.altitudeFT(1:Iapogee), ...
                         aprs.speedMPH(1:Iapogee), aprs.altitudeFT(1:Iapogee), ...
                         xlabels,ylabels);
-    title('Sounding Wind Data (Ascent ONLY)')
+    title('APRS GPS Sounding Wind Data (Ascent ONLY)')
     grid on
 
     figure(4)
@@ -66,7 +65,7 @@ if plots == 1
     [ax,L1,L2] = plotxx(aprs.course(Iapogee:end), aprs.altitudeFT(Iapogee:end), ...
                         aprs.speedMPH(Iapogee:end), aprs.altitudeFT(Iapogee:end), ...
                         xlabels,ylabels);
-    title('Sounding Wind Data (Descent ONLY)')
+    title('APRS GPS Sounding Wind Data (Descent ONLY)')
     grid on
 
     figure(6)
@@ -78,6 +77,7 @@ if plots == 1
     cb = colorbar('peer',gca);
     set(get(cb,'ylabel'),'String', 'Altitude (feet)');
     grid on
+    title('APRS GPS Trajectory')
 end
 
 end
