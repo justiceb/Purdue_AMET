@@ -1,4 +1,4 @@
-function data = ascent_ODE_wrapper( init_ODE, balloon, wind, lat0, long0, Free_Lift0 )
+function data = ascent_ODE_wrapper( init_ODE, balloon, wind, m_payload )
 %Created by Brent Justice
 %5/15/2014
 %
@@ -11,20 +11,34 @@ function data = ascent_ODE_wrapper( init_ODE, balloon, wind, lat0, long0, Free_L
 %balloon = struct with necessary balloon inputs
 
 %% run ode45 solver
-sx0 = 0;
-vx0 = 0;
-sy0 = 0;
-vy0 = 0;
-sz0 = alt0;
-vz0 = 0.001;
-init = [sx0, vx0, sy0, vy0, sz0, vz0, m_H2_0];
 timerange = [0 inf];
 options = odeset('Events',@detect_apogee,'RelTol',1E-3);
-[t, outputs] = ode45(@ascent_ODE, timerange, init_ODE, options, m_system, balloon.V, wind, dt);
+[t, outputs] = ode45(@ascent_ODE2, timerange, init_ODE, options, balloon, wind, m_payload);
 
+%extract outputs
+sx = outputs(:,1);
+vx = outputs(:,2);
+sy = outputs(:,3);
+vy = outputs(:,4);
+sz = outputs(:,5);
+vz = outputs(:,6);
+m_H2 = outputs(:,7);
 
-
-
+%run myfunc once last time to solve for dependant variables
+for n = 1:1:length(sx)
+    inputs = [sx(n), vx(n), sy(n), vy(n), sz(n), vz(n), m_H2(n)];
+    [~, data_ODE] = ascent_ODE2(t(n), inputs, balloon, wind, m_payload);
+    data(n) = data_ODE;
+end
+data = transpose_arrayOfStructs(data);
+data.sx = sx;
+data.vx = vx;
+data.sy = sy;
+data.vy = vy;
+data.sz = sz;
+data.vz = vz;
+data.m_H2 = m_H2;
+data.t = t;
 
 end
 
