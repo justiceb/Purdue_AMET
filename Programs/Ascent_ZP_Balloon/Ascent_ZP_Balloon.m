@@ -16,7 +16,7 @@ addpath(genpath(strcat(Parent,'Programs\Balloon_Shape')));
 run create_balloon
 
 %determine variables to keep
-balloon.V = V;                        %(m^3) balloon volume when deployed
+balloon.V = V                        %(m^3) balloon volume when deployed
 balloon.m_balloon = S*wd;             %(kg) predicted balloon mass
 balloon.m_payload = Wpayload/g;       %(kg) payload mass
 balloon.z = z;                        %(m) balloon height as a function of S

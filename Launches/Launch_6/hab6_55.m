@@ -1,10 +1,5 @@
-%kd9aiq
-clc;
-clear;
-close all;
-
 %% Load ARPS Data
-aprs = load_aprs('aprs.csv');                    %load aprs data
+aprs = load_aprs('APRS_6.csv');                    %load aprs data
 %Modify APRS data to SI units
 aprs.t0 = aprs.unix_time - aprs.unix_time(1);    %t clock in seconds
 aprs.speed = aprs.speed*0.277778;                %convert speed to m/s
@@ -12,7 +7,7 @@ aprs.course = -aprs.course+90;                   %convert to degrees where 0=eas
 [alt_apogee,i_apogee] = max(aprs.altitude);      %find apogee coordinate
 
 %% User inputs
-CD_vec = 0.1:0.1:2;             %iterate these CD values
+CD_vec = 1%0.1:0.1:2;             %iterate these CD values
 m = 15 * 0.453592;              %kg  --> payload mass
 %A = 11.5 * 8 * 0.00064516;      %m^2  cross section of parachute (or payload if no parachute)
 A = pi * (6/2)^2 * 0.092903;      %m^2  cross section of parachute (or payload if no parachute)
@@ -25,7 +20,7 @@ for q = 1:1:length(CD_vec)
     %sim inputs
     v0 = 0;                          %m/s --> initial velocity
     alt0 = alt_apogee;               %m  --> inital altitude
-    t_stop = 3000;                   %s  --> simulation run time
+    t_stop = 1690;                   %s  --> simulation run time
 
     %run sim
     Simulink.sdi.clear
@@ -109,7 +104,7 @@ for q = 1:1:length(CD_vec)
         n = n+1;
     end
 
-    figure(4)
+    figure(2)
     plot(sx*0.000621371,sy*0.000621371)
     hold all
     xlabel('latitude distance (miles)')

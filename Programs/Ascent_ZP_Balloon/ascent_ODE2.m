@@ -23,29 +23,39 @@ R_H2 = 4124;                  %specific gas constant hydrogen (SI)
 [rho_H2_amb]=stdatmo_H2(sz);                     %SI  (standard atmosphere)
 
 %Unconstrained gas properties --> H2 pressureized by balloon
-syms rho_H2_avg positive
+T_H2_avg = T_air;                                                       %(K) H2 temperature = ambient air T
+
+F = @(x) [x(1) - g*(rho_air-x(3))*0.834*((0.75/pi)*(m_H2/x(3)))^(1/3);...
+          x(2) - P_air + x(1);...
+          x(3) - x(2)/(R_H2*T_H2_avg);];
+x = fsolve(F,[0.01,P_air,rho_H2_amb],optimoptions('fsolve','Display','off'));
+x = real(x);
+dP = x(1);
+P_H2_avg = x(2);
+rho_H2_avg = x(3);
+
+
+%{
 for n = 1:1:2
     dP = g*(rho_air-rho_H2_avg)*0.834*((0.75/pi)*(m_H2/rho_H2_avg))^(1/3);  %(N/m^2) average change in pressure between H2 and air
     P_H2_avg = P_air + dP;                                                  %(N/m^2) average H2 pressure
-    T_H2_avg = T_air;                                                       %(K) H2 temperature = ambient air T
     if n==1
         %rho_H2_avg = double(solve(rho_H2_avg == P_H2_avg/(R_H2*T_H2_avg)));         %solve via ideal gas law
-        
         F = rho_H2_avg - P_H2_avg/(R_H2*T_H2_avg);
-        rho_H2_avg = fsolve(matlabFunction(F),rho_H2_amb,optimoptions('fsolve','Display','off'));
-        
-        %fsolve(@(rho_H2_avg) rho_H2_avg-P_H2_avg/(R_H2*T_H2_avg),rho_H2_amb,optimoptions('fsolve','Display','off'));
+        rho_H2_avg = fzero(matlabFunction(F),rho_H2_amb);
     end
 end
+%}
 
 %Constrained gas properties --> if gas volume exceeds balloon volume
 volume_H2 = m_H2/rho_H2_avg;
+[sz m_H2 rho_H2_avg volume_H2]
 if volume_H2 > balloon.V
-    rho_H2_avg = m_H2/balloon.V;
-    P_H2_avg = rho_H2_avg * R_H2 * T_H2_avg;
-    dp = P_H2_avg - P_air;
-    b = g*(rho_H2_avg-rho_air);
-    dp_base = dp - 0.5*b*(balloon.z(end)/2);
+    rho_H2_avg = m_H2/balloon.V
+    P_H2_avg = rho_H2_avg * R_H2 * T_H2_avg
+    dp = P_H2_avg - P_air
+    b = g*(rho_H2_avg-rho_air)
+    dp_base = dp - 0.5*b*(balloon.z(end)/2)
     volume = balloon.V;
 else
     dp_base = 0;
@@ -55,7 +65,7 @@ end
 %% Mass flow rate
 Cdischarge = 0.6;
 Aduct = 0.3;                                               %(m^2) area at the base of the balloon
-mdot_H2 = -Aduct*Cdischarge*sqrt(2*dp_base*rho_H2_avg);    %(km/s) discharge rate of hydrogen gas
+mdot_H2 = -Aduct*Cdischarge*sqrt(2*dp_base*rho_H2_avg)    %(km/s) discharge rate of hydrogen gas
 
 %% Balloon Shape
 diameter = 2.23*((0.75/pi)*(m_H2/rho_H2_avg))^(1/3);  %(m) balloon diameter
@@ -100,7 +110,6 @@ data.volume_H2 = volume_H2;
 data.mdot_H2 = mdot_H2;
 data.gc = gc;
 data.gs = gs;
-t
 end
 
 

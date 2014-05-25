@@ -4,7 +4,7 @@ clear;
 close all;
 
 %% Load ARPS Data
-aprs = load_aprs('aprs.csv');                    %load aprs data
+aprs = load_aprs('APRS_6.csv');                    %load aprs data
 %Modify APRS data to SI units
 aprs.t0 = aprs.unix_time - aprs.unix_time(1);    %t clock in seconds
 aprs.speed = aprs.speed*0.277778;                %convert speed to m/s
