@@ -22,7 +22,7 @@ balloon.m_payload = Wpayload/g;       %(kg) payload mass
 balloon.z = z;                        %(m) balloon height as a function of S
 
 %% Determine initial H2 mass
-V_H2_fill = 7;  %(m)^3
+V_H2_fill = 10;  %(m)^3
 [rho_H2_fill]=stdatmo_H2(0);
 m_H2_0 = rho_H2_fill * V_H2_fill
 
@@ -40,5 +40,32 @@ m_payload = 3.62874;
 
 %run
 ascent = ascent_ODE_wrapper( init_ODE, balloon, wind, m_payload );
+
+
+figure(3)
+figure(7)
+subplot(2,2,1)
+plot(ascent.t,ascent.sz)
+xlabel('time (s)')
+ylabel('altitude (m)')
+grid on
+subplot(2,2,2)
+plot(ascent.t,ascent.volume_H2)
+xlabel('time (s)')
+ylabel('Volume (m^3)')
+grid on
+hold all
+plot(ascent.t,ones(1,length(ascent.t))*balloon.V)
+legend('Constrained Hydrogen Volume','Balloon Volume')
+subplot(2,2,3)
+plot(ascent.t,ascent.m_H2)
+xlabel('time (s)')
+ylabel('Hydrogen mass (kg)')
+grid on
+subplot(2,2,4)
+plot(ascent.t,ascent.mdot_H2)
+xlabel('time (s)')
+ylabel('hydrogen mass flow rate (kg/s)')
+grid on
 
 
