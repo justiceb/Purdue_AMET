@@ -1,8 +1,8 @@
 function [outputs, data] = ascent_ODE2(t, inputs, balloon, wind, m_payload)
 
 %define inputs and outputs
-%ODE inputs = [sx, vx, sy, vy, xz, vz, m_H2]
-%ODE outputs = [vx, ax, vy, ay, vz, az, mdot_H2]
+%ODE inputs = [sx, vx, sy, vy, xz, vz, m_H2, T_H2]
+%ODE outputs = [vx, ax, vy, ay, vz, az, mdot_H2, Tdot_H2]
 %m_h2 = mass of filled hydrogen (kg)
 sx = inputs(1);     %(m)
 vx = inputs(2);     %(m/s)
@@ -11,70 +11,58 @@ vy = inputs(4);     %(m/s)
 sz = inputs(5);     %(m)
 vz = inputs(6);     %(m/s)
 m_H2 = inputs(7);  %(kg)
+T_H2 = inputs(8);  %(kg)
 
 %% Constants
 g = 9.807;                     %m/s/s
 R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
+CP_air = 1.01;                %kj/kg-K
+CV_air = 0.718;               %kj/kg-K
+CP_H2 = 14.32;                %kj/kg-K
+CV_H2 = 10.16;                %kj/kg-K
+gamma_H2 = CP_H2 / CV_H2;     %ratio of specific heats
 
 %% Gas properties 
 %Ambient Gas Properties --> f(altitude)
-[rho_air,~,T_air,P_air]=stdatmo(sz);                     %SI  (standard atmosphere)
-[rho_H2_amb]=stdatmo_H2(sz);                     %SI  (standard atmosphere)
+[rho_air,~,T_air,P_air,nu_air]=stdatmo(sz);      %SI  (standard atmosphere)
+mu_air = nu_air * rho_air;                       %SI dynamic viscosity for air
+mu_H2 = 386.9E-5*(T_H2/273.15)^1.5 * (T_H2+650.4)/((T_H2+19.6)*(T_H2+1176));  %kg/m-s where T is in K
+k_air = 0.0241*(T_air/273.15)^(0.9);             %SI conductivity of air
+k_H2 = 1.2*0.144*(T_H2/273.15)^(0.7);            %SI conductivity of H2
+Pr_air = CP_air*mu_air/k_air;                    %SI prandtl number for air
+Pr_H2 = CP_H2*mu_H2/k_H2;                    %SI prandtl number for air
 
 %Unconstrained gas properties --> H2 pressureized by balloon
-T_H2_avg = T_air;                                                       %(K) H2 temperature = ambient air T
-
-F = @(x) [x(1) - (g*(rho_air-x(3))*0.834*((0.75/pi)*(m_H2/x(3)))^(1/3));...
-          x(2) - (P_air + x(1));...
-          x(3) - (x(2)/(R_H2*T_H2_avg));];
-x = fsolve(F,[1,P_air,rho_H2_amb],optimoptions('fsolve','Display','off'));
-dP = x(1);
-P_H2_avg = x(2);
-rho_H2_avg = x(3);
-
-%Constrained gas properties --> if gas volume exceeds balloon volume
+rho_H2_avg = P_air/(R_H2*T_H2);
 volume_H2 = m_H2/rho_H2_avg;
 
-t
-sz
-dP
-P_H2_avg
-P_air
-rho_H2_avg
-rho_air
-balloon.V
-volume_H2
-
-
-if volume_H2 > balloon.V
-    rho_H2_avg = m_H2/balloon.V;
-    P_H2_avg = rho_H2_avg * R_H2 * T_H2_avg;
-    dP = P_H2_avg - P_air;
-    b = g*(rho_air-rho_H2_avg);
-    dp_base = dP - 0.5*b*(balloon.z(end)/2);
-    volume = balloon.V;
-    
-    rho_H2_avg
-    P_H2_avg
-    dP
-    b
-    dp_base
-    
-    
-else
-    dp_base = 0;
-    volume = volume_H2;
-end
+%Constrained gas properties --> if gas volume exceeds balloon volume
+rho_H2_avg_constrained = m_H2/balloon.V;
+P_H2_avg_constrained = rho_H2_avg_constrained * R_H2 * T_H2;
+dP_constrained = P_H2_avg_constrained - P_air;
+b_constrained = g*(rho_air-rho_H2_avg_constrained);
+dp_base = dP_constrained - 0.5*b_constrained*(balloon.z(end)/2);
+    if dp_base < 0
+        dp_base = 0;
+        volume = volume_H2;
+    else
+        rho_H2_avg = rho_H2_avg_constrained;
+        volume = balloon.V;
+    end
 
 %% Mass flow rate
 Cdischarge = 0.6;
 Aduct = 0.003;                                               %(m^2) area at the base of the balloon
-mdot_H2 = -Aduct*Cdischarge*sqrt(2*dp_base*rho_H2_avg)    %(km/s) discharge rate of hydrogen gas
+mdot_H2 = -Aduct*Cdischarge*sqrt(2*dp_base*rho_H2_avg);    %(km/s) discharge rate of hydrogen gas
 
 %% Balloon Shape
 diameter = 2.23*((0.75/pi)*(m_H2/rho_H2_avg))^(1/3);  %(m) balloon diameter
 Atop = (pi/4)*diameter^2;                             %(m^2) balloon top reference area
+Asurf = 2.582*diameter^2;
+Lgoreb = 1.37*diameter;
+Asurf1 = 4.94*balloon.V^(2/3) * (1-cos(pi*Lgoreb/balloon.s(end)));
+Aeffective = 0.65*Asurf + 0.35*Asurf1;
 
 %% calculate net vertical acceleration
 CD = 0.8;
@@ -104,18 +92,29 @@ Dy = (1/2) * rho_air * vy_inf^2 * CD * Aref * sign(vy_inf);
 ax = Dx/(balloon.m_balloon+m_payload+m_H2);
 ay = Dy/(balloon.m_balloon+m_payload+m_H2);
 
+%% Temperature differential equation
+Tfilm = mean([T_air, T_H2]);
+HCinternal = 0.13*k_H2*((rho_H2_avg^2*g*abs(Tfilm-T_H2)*Pr_H2)/(T_H2*mu_air^2))^(1/3);
+Qconvint = HCinternal * Aeffective * (Tfilm - T_H2);
+Qburner = 0;
+Tdot_H2 = ((Qconvint + Qburner)/m_H2 - g*(T_H2/T_air)*(R_H2/R_air)*vz) * (1/CP_H2);
+
 %% format outputs
-outputs = [vx, ax, vy, ay, vz, az, mdot_H2]';
+outputs = [vx, ax, vy, ay, vz, az, mdot_H2, Tdot_H2]';
 data.L = L;
 data.W = W;
 data.Dz = Dz;
 data.Fnet_z = Fnet_z;
 data.az = az;
 data.volume_H2 = volume_H2;
+data.volume = volume;
 data.mdot_H2 = mdot_H2;
+data.Tdot_H2 = Tdot_H2;
 data.gc = gc;
 data.gs = gs;
 data.dp_base = dp_base;
+data.T_air = T_air;
+data.Tfilm = Tfilm;
 end
 
 
@@ -136,5 +135,15 @@ for n = 1:1:2
         rho_H2_avg = fzero(matlabFunction(F),rho_H2_amb);
     end
 end
+%}
+
+%{
+F = @(x) [x(1) - (g*(rho_air-x(3))*0.834*((0.75/pi)*(m_H2/x(3)))^(1/3));...
+          x(2) - (P_air + x(1));...
+          x(3) - (x(2)/(R_H2*T_H2_avg));];
+x = fsolve(F,[1,P_air,rho_H2_amb],optimoptions('fsolve','Display','off'));
+dP = x(1);
+P_H2_avg = x(2);
+rho_H2_avg = x(3);
 %}
 
