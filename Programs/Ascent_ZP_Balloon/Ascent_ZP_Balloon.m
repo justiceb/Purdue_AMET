@@ -35,7 +35,7 @@ sy_0 = 0;
 vy_0 = 0;
 sz_0 = 0;
 vz_0 = 0.001;
-T_H2_0 = 293;
+T_H2_0 = -20+273.15;
 init_ODE = [sx_0, vx_0, sy_0, vy_0,sz_0, vz_0, m_H2_0, T_H2_0];
 wind = load_Wyoming_Sounding('ILN_12Z_06_May_2014.csv');
 m_payload = 3.62874;
@@ -87,11 +87,28 @@ ylabel('Temperature (C)')
 grid on
 legend('H2 temp','air temp','film temp')
 
+figure(8)
+subplot(2,2,1)
+plot(ascent.t,ascent.Tdot_H2)
+xlabel('time (s)')
+ylabel('Tdot (K/s)')
+grid on
 
+subplot(2,2,2)
+plot(ascent.t,ascent.HCinternal)
+xlabel('time (s)')
+ylabel('HCinternal (Watts/m^2-K)')
+grid on
 
+subplot(2,2,3)
+plot(ascent.t,ascent.Qconvint)
+xlabel('time (s)')
+ylabel('Qconvint (Watts)')
+grid on
 
-
-
-
-
+subplot(2,2,4)
+plot(ascent.t,ascent.Aeffective)
+xlabel('time (s)')
+ylabel('Aeffective (m^2)')
+grid on
 

@@ -17,10 +17,10 @@ T_H2 = inputs(8);  %(kg)
 g = 9.807;                     %m/s/s
 R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
-CP_air = 1.01;                %kj/kg-K
-CV_air = 0.718;               %kj/kg-K
-CP_H2 = 14.32;                %kj/kg-K
-CV_H2 = 10.16;                %kj/kg-K
+CP_air = 1.01*1000;                %j/kg-K
+CV_air = 0.718*1000;               %j/kg-K
+CP_H2 = 14.32*1000;                %j/kg-K
+CV_H2 = 10.16*1000;                %j/kg-K
 gamma_H2 = CP_H2 / CV_H2;     %ratio of specific heats
 
 %% Gas properties 
@@ -42,7 +42,7 @@ rho_H2_avg_constrained = m_H2/balloon.V;
 P_H2_avg_constrained = rho_H2_avg_constrained * R_H2 * T_H2;
 dP_constrained = P_H2_avg_constrained - P_air;
 b_constrained = g*(rho_air-rho_H2_avg_constrained);
-dp_base = dP_constrained - 0.5*b_constrained*(balloon.z(end)/2);
+dp_base = dP_constrained - b_constrained*(balloon.z(end)/2);
     if dp_base < 0
         dp_base = 0;
         volume = volume_H2;
@@ -115,6 +115,9 @@ data.gs = gs;
 data.dp_base = dp_base;
 data.T_air = T_air;
 data.Tfilm = Tfilm;
+data.HCinternal = HCinternal;
+data.Qconvint = Qconvint;
+data.Aeffective = Aeffective;
 end
 
 
