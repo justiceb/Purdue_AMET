@@ -13,7 +13,7 @@ function data = ascent_ODE_wrapper( init_ODE, balloon, wind, m_payload )
 %% run ode45 solver
 timerange = [0 inf];
 options = odeset('Events',@detect_apogee,'RelTol',1E-6);
-[t, outputs] = ode45(@ascent_ODE2, timerange, init_ODE, options, balloon, wind, m_payload);
+[t, outputs] = ode45(@ascent_ODE, timerange, init_ODE, options, balloon, wind, m_payload);
 
 %extract outputs
 sx = outputs(:,1);
@@ -28,7 +28,7 @@ T_H2 = outputs(:,8);
 %run myfunc once last time to solve for dependant variables
 for n = 1:1:length(sx)
     inputs = [sx(n), vx(n), sy(n), vy(n), sz(n), vz(n), m_H2(n), T_H2(n)];
-    [~, data_ODE] = ascent_ODE2(t(n), inputs, balloon, wind, m_payload);
+    [~, data_ODE] = ascent_ODE(t(n), inputs, balloon, wind, m_payload);
     data(n) = data_ODE;
 end
 data = transpose_arrayOfStructs(data);
