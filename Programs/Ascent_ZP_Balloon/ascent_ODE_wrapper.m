@@ -12,7 +12,7 @@ function data = ascent_ODE_wrapper( init_ODE, balloon, wind, m_payload )
 
 %% run ode45 solver
 timerange = [0 inf];
-options = odeset('Events',@detect_apogee,'RelTol',1E-6);
+options = odeset('Events',@detect_apogee,'RelTol',1E-4);
 [t, outputs] = ode45(@ascent_ODE, timerange, init_ODE, options, balloon, wind, m_payload);
 
 %extract outputs

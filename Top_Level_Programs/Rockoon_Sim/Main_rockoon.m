@@ -28,7 +28,7 @@ input.alt_chute = 5000 * 0.3048;     %(m) parachute deployment altitude
 input.Dparachute = 36 * 0.0254;      %(m) parachute diameter
 
 %% Configs
-config.wind = load_Wyoming_Sounding('ILN_12Z_06_May_2014.csv');
+config.wind = load_Wyoming_Sounding('12Z_05_May_2014.csv');
 config.rasaero = load_RASAero_aeroplot1('RASAero_aeroplot1.csv');
 config.rocksim = load_rocksim('rocksim.csv');
 
@@ -40,25 +40,13 @@ balloon.V = V;                        %(m^3) balloon volume when deployed
 balloon.m_balloon = S*wd;             %(kg) predicted balloon mass
 balloon.m_payload = Wpayload/g;       %(kg) payload mass
 balloon.z = z;                        %(m) balloon height as a function of S
+balloon.s = s;                        %(s) balloon gore length
 
 %clear all variables but balloon struct
 clearvars -except input config balloon
 
 %% Ascent Calculator
 run rockoon_ascent
-
-%determine variables to keep
-ascent.sx = sx;
-ascent.sy = sy;
-ascent.sz = sz;
-ascent.vz = vz;
-ascent.t = t;
-ascent.lat = lat;
-ascent.long = long;
-ascent.gs = gs;
-ascent.gc = gc;
-ascent.vx = vx;
-ascent.vy = vy;
 
 %clear all variables but balloon and ascent structs
 clearvars -except input config balloon ascent
@@ -115,7 +103,7 @@ xlabels{1} = 'Ground Course (degrees)';
 xlabels{2} = 'Windspeed (mph)';
 ylabels{1} = 'Altitude (feet)';
 ylabels{2} = 'Altitude (feet)';
-[ax,L1,L2] = plotxx(wraptopi([ascent.gc, rockoon.gc]*0.0174532925,0)*57.2957795, [ascent.sz; rockoon.sz]*3.28084, ...
+[ax,L1,L2] = plotxx([ascent.gc, rockoon.gc], [ascent.sz; rockoon.sz]*3.28084, ...
                     [ascent.gs, rockoon.gs]*2.23694, [ascent.sz; rockoon.sz]*3.28084, ...
                     xlabels,ylabels);
 hold all

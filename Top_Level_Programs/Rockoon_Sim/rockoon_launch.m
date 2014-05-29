@@ -1,6 +1,6 @@
 %% Prepare variabels and run ODE sim
 sx_0 = 0;
-vx_0 = norm(ascent.vx(end), ascent.vy(end));
+vx_0 = norm([ascent.vx(end), ascent.vy(end)]);
 sz_0 = ascent.sz(end);
 vz_0 =  0.0001;        %make really small value to init angle of attack
 theta_0 = 90;           %degrees

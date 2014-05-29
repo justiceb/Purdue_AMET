@@ -38,7 +38,7 @@ addpath(genpath(strcat(Parent,'Common_Functions')));
 rho_PE = 1000;                 %kg/m^3  density of polyethlyene we purchased
 thickness_PE = 18 * 1E-6;     %m  thickness of polyethylene we purchased
 Wpayload = 10*4.44822162;      %N  payload weight
-alt_apogee = 70000 * 0.3048;  %altitude at apogee (m)
+alt_apogee = 80000 * 0.3048;  %altitude at apogee (m)
 numGores = 7;                %number of gores
 
 %constants  (mission criteria and materials)

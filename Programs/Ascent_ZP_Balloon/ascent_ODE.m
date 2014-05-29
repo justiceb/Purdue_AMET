@@ -64,7 +64,7 @@ Abase = 0.003;                                                       %(m^2) area
 mdot_H2_base = -Abase*Cdischarge_base*sqrt(2*dp_base*rho_H2_avg);    %(km/s) discharge rate of hydrogen gas
 
 Cdischarge_hole = 0.6;
-Ahole = 0.000045;
+Ahole = 0;%0.000045;
 x_hole = 0.75;
 dp_hole = dp_base + g*(rho_air-rho_H2_avg)*x_hole*diameter;
 mdot_H2_hole = -Ahole*Cdischarge_hole*sqrt(2*dp_hole*rho_H2_avg);

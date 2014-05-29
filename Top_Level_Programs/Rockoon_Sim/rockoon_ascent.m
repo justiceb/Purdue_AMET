@@ -10,74 +10,106 @@ constant volume.  Eventually, the balloon will establish neutral bouyancy
 at apogee.
 %}
 
-%% Inputs
-V_H2_surplus = input.V_H2_surplus;                      %(m^3) surplus volume of H2 added to balloon
-m_balloon = balloon.m_balloon;                          %(kg) measured balloon mass
-m_payload = balloon.m_payload;                          %(kg) measured payload mass
-lat0 =  input.lat0;
-long0 = input.long0;
-alt0 = input.alt0;                                      %(m) launch elevation
-wind = config.wind;
+%% Determine initial H2 mass
+V_H2_fill = 10;  %(m)^3
+[rho_H2_fill]=stdatmo_H2(0);
+m_H2_0 = rho_H2_fill * V_H2_fill;
 
-%constant
-g = 9.81;                     %m/s/s
-R_air = 287.058;              %specific gas constant air (SI)
-R_H2 = 4124;                  %specific gas constant hydrogen (SI)
+%% Run Ascent program
+%variable inputs
+sx_0 = 0;
+vx_0 = 0;
+sy_0 = 0;
+vy_0 = 0;
+sz_0 = input.alt0;
+vz_0 = 0.001;
+T_H2_0 = 15+273.15;
+init_ODE = [sx_0, vx_0, sy_0, vy_0,sz_0, vz_0, m_H2_0, T_H2_0];
 
-%% determine hydrogen mass to fill at launch
-[rho_air,SOS,T,P,nu,ZorH]=stdatmo(alt0);   %SI  (standard atmosphere)
-rho_H2 = P/(R_H2*T);                     %Ideal gas law, assume ambient pressure
-m_system = m_balloon + m_payload;        %(kg) balloon and payload mass
-W = m_system * g;                        %(N) total weight
-Vmin = W/((rho_air - rho_H2) * g);       %(m^3) minimum hydrogen needed 
-V_H2_0 = Vmin + V_H2_surplus;           %(m^3) volume of hydrogen filled at SL 
-m_H2_0 = rho_H2 * V_H2_0;                 %(kg) mas of hydrogen filled at launch
-
-fprintf('\n');
-fprintf('Total Hydrogen to Fill = %f ft^3 \n',V_H2_0 * 35.3147);
-
-%% run ode45 solver
-sx0 = 0;
-vx0 = 0;
-sy0 = 0;
-vy0 = 0;
-sz0 = alt0;
-vz0 = 0.001;
-init = [sx0, vx0, sy0, vy0, sz0, vz0, m_H2_0];
-dt = 1; %s
-timerange = 0:dt:50000;
-options = odeset('Events',@detect_apogee,'RelTol',1E-3);
-[t, outputs] = ode45(@ascent_ODE, timerange, init, options, m_system, balloon.V, wind, dt);
-
-%extract outputs
-sx = outputs(:,1);
-vx = outputs(:,2);
-sy = outputs(:,3);
-vy = outputs(:,4);
-sz = outputs(:,5);
-vz = outputs(:,6);
-m_H2 = outputs(:,7);
-
-%run myfunc once last time to solve for dependant variables
-for n = 1:1:length(sz)
-    inputs = [sx(n), vx(n), sy(n), vy(n), sz(n), vz(n), m_H2(n)];
-    [outputs, data] = ascent_ODE(t(n), inputs, m_system, balloon.V, wind, dt);
-    L(n) = data.L;
-    W(n) = data.W;
-    Dz(n) = data.Dz;
-    Fnet_z(n) = data.Fnet_z;
-    az(n) = data.az;
-    Vgas(n) = data.Vgas;
-    mdot_H2(n) = data.mdot_H2;
-    gc(n) = data.gc;
-    gs(n) = data.gs;
-end
+%run ODE
+ascent = ascent_ODE_wrapper( init_ODE, balloon, config.wind, balloon.m_payload );
 
 %% Convert x,y distances to GPS coordinates
-[ long, lat ] = dxdy_to_coordinates( sx, sy, long0, lat0 );
-trajectory = [sz long' lat'];
+[ ascent.long, ascent.lat ] = dxdy_to_coordinates( ascent.sx, ascent.sy, input.long0, input.lat0 );
+ascent.trajectory = [ascent.sz ascent.long' ascent.lat'];
 
-%run C:\AMET\hab10_analysis\hab10
+%% Plots
+figure(3)
+subplot(3,2,1)
+plot(ascent.t,ascent.sz*3.28084)
+xlabel('time (s)')
+ylabel('altitude (ft)')
+grid on
+
+subplot(3,2,2)
+plot(ascent.t,ascent.vz)
+xlabel('time (s)')
+ylabel('Ascent Rate (m/s)')
+grid on
+
+subplot(3,2,3)
+plot(ascent.t,ascent.m_H2)
+hold all
+xlabel('time (s)')
+ylabel('Hydrogen mass (kg)')
+grid on
+
+subplot(3,2,4)
+plot(ascent.t,ascent.mdot_H2,ascent.t,ascent.mdot_H2_base,ascent.t,ascent.mdot_H2_hole)
+xlabel('time (s)')
+ylabel('hydrogen mass flow rate (kg/s)')
+grid on
+legend('sum','base','hole',0)
+
+subplot(3,2,5)
+plot(ascent.t,ascent.volume_H2)
+xlabel('time (s)')
+ylabel('Volume (m^3)')
+grid on
+hold all
+plot(ascent.t,ones(1,length(ascent.t))*balloon.V)
+legend('Constrained Hydrogen Volume','Balloon Volume',0)
+
+subplot(3,2,6)
+plot(ascent.t,ascent.T_H2-273.15,ascent.t,ascent.T_air-273.15,ascent.t,ascent.Tfilm-273.15)
+xlabel('time (s)')
+ylabel('Temperature (C)')
+grid on
+legend('H2 temp','air temp','film temp')
+
+figure(4)
+subplot(2,2,1)
+plot(ascent.t,ascent.Tdot_H2)
+xlabel('time (s)')
+ylabel('Tdot (K/s)')
+grid on
+
+subplot(2,2,2)
+plot(ascent.t,ascent.HCinternal)
+xlabel('time (s)')
+ylabel('HCinternal (Watts/m^2-K)')
+grid on
+
+subplot(2,2,3)
+plot(ascent.t,ascent.Qconvint)
+xlabel('time (s)')
+ylabel('Qconvint (Watts)')
+grid on
+
+subplot(2,2,4)
+plot(ascent.t,ascent.Aeffective)
+xlabel('time (s)')
+ylabel('Aeffective (m^2)')
+grid on
+
+
+
+
+
+
+
+
+%{
 %% Make some plots
 f3 = figure(3);
 subplot(3,2,1)
@@ -132,7 +164,7 @@ title('Ascent Trajectory')
 cb = colorbar('peer',gca);
 set(get(cb,'ylabel'),'String', 'Altitude (feet)');
 grid on
-
+%}
 
 
 
