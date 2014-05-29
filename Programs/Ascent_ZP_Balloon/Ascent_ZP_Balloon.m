@@ -23,7 +23,7 @@ balloon.z = z;                        %(m) balloon height as a function of S
 balloon.s = s;                        %(s) balloon gore length
 
 %% Determine initial H2 mass
-V_H2_fill = 10;  %(m)^3
+V_H2_fill = 7;  %(m)^3
 [rho_H2_fill]=stdatmo_H2(0);
 m_H2_0 = rho_H2_fill * V_H2_fill
 
@@ -35,7 +35,7 @@ sy_0 = 0;
 vy_0 = 0;
 sz_0 = 0;
 vz_0 = 0.001;
-T_H2_0 = -20+273.15;
+T_H2_0 = 15+273.15;
 init_ODE = [sx_0, vx_0, sy_0, vy_0,sz_0, vz_0, m_H2_0, T_H2_0];
 wind = load_Wyoming_Sounding('ILN_12Z_06_May_2014.csv');
 m_payload = 3.62874;
@@ -66,10 +66,11 @@ ylabel('Hydrogen mass (kg)')
 grid on
 
 subplot(3,2,4)
-plot(ascent.t,ascent.mdot_H2)
+plot(ascent.t,ascent.mdot_H2,ascent.t,ascent.mdot_H2_base,ascent.t,ascent.mdot_H2_hole)
 xlabel('time (s)')
 ylabel('hydrogen mass flow rate (kg/s)')
 grid on
+legend('sum','base','hole',0)
 
 subplot(3,2,5)
 plot(ascent.t,ascent.volume_H2)
@@ -78,7 +79,7 @@ ylabel('Volume (m^3)')
 grid on
 hold all
 plot(ascent.t,ones(1,length(ascent.t))*balloon.V)
-legend('Constrained Hydrogen Volume','Balloon Volume')
+legend('Constrained Hydrogen Volume','Balloon Volume',0)
 
 subplot(3,2,6)
 plot(ascent.t,ascent.T_H2-273.15,ascent.t,ascent.T_air-273.15,ascent.t,ascent.Tfilm-273.15)

@@ -51,11 +51,6 @@ dp_base = dP_constrained - b_constrained*(balloon.z(end)/2);
         volume = balloon.V;
     end
 
-%% Mass flow rate
-Cdischarge = 0.6;
-Aduct = 0.003;                                               %(m^2) area at the base of the balloon
-mdot_H2 = -Aduct*Cdischarge*sqrt(2*dp_base*rho_H2_avg);    %(km/s) discharge rate of hydrogen gas
-
 %% Balloon Shape
 diameter = 2.23*((0.75/pi)*(m_H2/rho_H2_avg))^(1/3);  %(m) balloon diameter
 Atop = (pi/4)*diameter^2;                             %(m^2) balloon top reference area
@@ -63,6 +58,19 @@ Asurf = 2.582*diameter^2;
 Lgoreb = 1.37*diameter;
 Asurf1 = 4.94*balloon.V^(2/3) * (1-cos(pi*Lgoreb/balloon.s(end)));
 Aeffective = 0.65*Asurf + 0.35*Asurf1;
+
+%% Mass flow rate
+Cdischarge_base = 0.6;
+Abase = 0.003;                                               %(m^2) area at the base of the balloon
+mdot_H2_base = -Abase*Cdischarge_base*sqrt(2*dp_base*rho_H2_avg);    %(km/s) discharge rate of hydrogen gas
+
+Cdischarge_hole = 0.6;
+Ahole = 0.000043;
+x_hole = 0.75;
+dp_hole = dp_base + g*(rho_air-rho_H2_avg)*x_hole*diameter;
+mdot_H2_hole = -Ahole*Cdischarge_hole*sqrt(2*dp_hole*rho_H2_avg);
+
+mdot_H2 = mdot_H2_base + mdot_H2_hole;
 
 %% calculate net vertical acceleration
 CD = 0.8;
@@ -118,6 +126,8 @@ data.Tfilm = Tfilm;
 data.HCinternal = HCinternal;
 data.Qconvint = Qconvint;
 data.Aeffective = Aeffective;
+data.mdot_H2_base = mdot_H2_base;
+data.mdot_H2_hole = mdot_H2_hole;
 end
 
 
