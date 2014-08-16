@@ -19,8 +19,8 @@ addpath(genpath(strcat(Parent,'Programs\Descent_Parachute')));
 input.m_payload = 0;                 %(kg)
 input.m_balloon = 0;                 %(kg)
 input.V_H2_surplus = 40 * 0.0283168; %(m^3) surplus volume of H2 added to balloon
-input.lat0 =  40.416275;
-input.long0 = -86.944016;
+input.lat0 =  33.221587;
+input.long0 = -106.750880;
 input.alt0 = 180;                    %(m)
 input.Drocket = 54 * 0.001;          %(m) rocket body diameter
 input.Afin = 0.0129032;              %(m^2) Aref for fin
@@ -28,7 +28,7 @@ input.alt_chute = 5000 * 0.3048;     %(m) parachute deployment altitude
 input.Dparachute = 36 * 0.0254;      %(m) parachute diameter
 
 %% Configs
-config.wind = load_Wyoming_Sounding('12Z_05_May_2014.csv');
+config.wind = load_Wyoming_Sounding('EPZ_12Z_12_Aug_2014.csv');
 config.rasaero = load_RASAero_aeroplot1('RASAero_aeroplot1.csv');
 config.rocksim = load_rocksim('rocksim.csv');
 
@@ -94,7 +94,7 @@ sz = [ascent.sz; rockoon.sz; descent.sz1; descent.sz2];
 long = [ascent.long'; rockoon.long'; descent.long1'; descent.long2'];
 lat = [ascent.lat'; rockoon.lat'; descent.lat1'; descent.lat2'];
 
-trajectory = [sz, long, lat];
+%trajectory = [sz, long, lat];
 
 %% Plots
 
@@ -129,6 +129,18 @@ xlabel('t-time (minutes)')
 ylabel('Altitude (ft)')
 grid on
 
+m=1;
+for n = 1:1:length(sz)
+    if mod(n,4) == 0
+        a(m) = sz(n);
+        b(m) = long(n);
+        c(m) = lat(n);
+        m = m+1;
+    end
+end
+trajectory = [a; b; c]';
+    
+    
 
 
 
