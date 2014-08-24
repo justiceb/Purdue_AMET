@@ -1,3 +1,4 @@
+function balloon_output = create_balloon(balloon_input_filename)
 % Authors:
 %           Brent Justice - justiceb@purdue.edu
 %           Ian Means
@@ -35,17 +36,17 @@ Parent = strcat(Parent,'\',NAME,'\');
 addpath(genpath(strcat(Parent,'Common_Functions')));
 
 %% Inputs (Mission Criteria)
-rho_PE = 1000;                 %kg/m^3  density of polyethlyene we purchased
-thickness_PE = 18 * 1E-6;     %m  thickness of polyethylene we purchased
-Wpayload = 10*4.44822162;      %N  payload weight
-alt_apogee = 80000 * 0.3048;  %altitude at apogee (m)
-numGores = 7;                %number of gores
+load(balloon_input_filename) %load the following input parameters
+%rho_PE         --> kg/m^3  density of polyethlyene we purchased
+%thickness_PE   --> m  thickness of polyethylene we purchased
+%Wpayload       --> N  payload weight
+%alt_apogee     --> altitude at apogee (m)
+%numGores       --> number of gores
 
 %constants  (mission criteria and materials)
 g = 9.81;                     %m/s/s
 R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
-goreTheta = (2*pi)/numGores;  %radians rotation per gore
 
 %% float conditions (at apogee)
 [rho_air,a_apogee,T,P,nu,ZorH]=stdatmo(alt_apogee);   %SI  (standard atmosphere)
@@ -79,6 +80,7 @@ V0 = 0;              %volume at base = 0
 r_end_condition = 0;       %radius at apex = 0
 theta_end_condition = -pi/2;    %angle at apex = -90 (radians)
 
+options = simset('SrcWorkspace','current');
 %iterate
 theta_end_error = 0.1;                         %set error high to enter loop
 theta_0_guess = 60 * 0.0174532925;             %angle at base (rads)  [GUESS]
@@ -87,7 +89,7 @@ while abs(theta_end_error) > 0.00174532925     %while error high, keep iterating
     r_end_error = 2;                            %set error high to enter loop
     s_dash_end_guess = 2;                       %arclength of gore (m/lambda) [GUESS]
     while abs(r_end_error) > 0.001               %shooting method until error for r is small
-            sim('natural_balloon')              %run simulink model
+            sim('natural_balloon',[],options)              %run simulink model
             s_dash = simout.time;               %format sim outputs
             z_dash = simout.data(:,1);
             r_dash = simout.data(:,2);
@@ -155,18 +157,22 @@ rho_H2_SL = P_SL/(R_H2*T_SL);                           %Ideal gas law, assume a
 V_H2_SL = m_H2 / rho_H2_SL;                             %m^3 Hydrogen Volume at Sea Level
 
 %% Print outputs
+m_PE = S*wd;  %kg
+m_payload = Wpayload / g;
+arclength = s(end);
+height = z(end);
 fprintf('balloon surface area = %f m^2 \n',S )
 fprintf('balloon volume = %f m^3 \n',V )
 fprintf('balloon volume = %f ft^3 \n',V *35.3147)
-fprintf('balloon mass = %f kg \n',S*wd )
+fprintf('balloon mass = %f kg \n',m_PE )
 fprintf('payload mass = %f kg \n',Wpayload/g )
-fprintf('total weight = %f N \n',Wpayload+S*wd*g )
+fprintf('total weight = %f N \n',Wpayload+m_PE*g )
 fprintf('total lift = %f N \n',V*bd )
 fprintf('Hydrogen Volume at Sea Level = %f ft^3 \n',V_H2_SL *35.3147 )
 fprintf('angle at apex = %f degrees  (shoot for -90) \n',theta(end)/ 0.0174532925 )
 fprintf('angle at base = %f degrees  (shoot for -90) \n',theta(1)/ 0.0174532925 )
 fprintf('radius at apex = %f m  (shoot for 0) \n',r(end) )
-fprintf('arclength of gore = %f m \n',s(end) )
+fprintf('arclength of gore = %f m \n',arclength )
 
 f1 = figure(1);
 subplot(1,2,1)
@@ -178,6 +184,7 @@ axis equal
 title('balloon gore contour at apogee')
 
 %% Determine Gore Shape
+goreTheta = (2*pi)/numGores;  %radians rotation per gore
 lengthTot = 0;
 q = length(r);
 marker = 1;
@@ -235,3 +242,10 @@ zlabel('height (meters)')
 title('Balloon Shape at Apogee')
 axis equal
 
+%% Output
+w = whos;
+for a = 1:length(w) 
+balloon_output.(w(a).name) = eval(w(a).name); 
+end
+
+end

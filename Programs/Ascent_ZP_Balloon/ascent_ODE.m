@@ -1,16 +1,16 @@
-function [outputs, data] = ascent_ODE(t, inputs, balloon, wind, m_payload)
+function [ODE_outputs, data] = ascent_ODE(t, ODE_inputs, input)
 
 %define inputs and outputs
 %ODE inputs = [sx, vx, sy, vy, xz, vz, m_H2, T_H2]
 %ODE outputs = [vx, ax, vy, ay, vz, az, mdot_H2, Tdot_H2]
-sx = inputs(1);     %(m)
-vx = inputs(2);     %(m/s)
-sy = inputs(3);     %(m)
-vy = inputs(4);     %(m/s)
-sz = inputs(5);     %(m)
-vz = inputs(6);     %(m/s)
-m_H2 = inputs(7);  %(kg)
-T_H2 = inputs(8);  %(kg)
+sx = ODE_inputs(1);     %(m)
+vx = ODE_inputs(2);     %(m/s)
+sy = ODE_inputs(3);     %(m)
+vy = ODE_inputs(4);     %(m/s)
+sz = ODE_inputs(5);     %(m)
+vz = ODE_inputs(6);     %(m/s)
+m_H2 = ODE_inputs(7);  %(kg)
+T_H2 = ODE_inputs(8);  %(kg)
 
 %% Constants
 g = 9.807;                    %m/s/s
@@ -37,17 +37,17 @@ rho_H2_avg = P_air/(R_H2*T_H2);
 volume_H2 = m_H2/rho_H2_avg;
 
 %Constrained gas properties --> if gas volume exceeds balloon volume
-rho_H2_avg_constrained = m_H2/balloon.V;
+rho_H2_avg_constrained = m_H2/input.balloon.V;
 P_H2_avg_constrained = rho_H2_avg_constrained * R_H2 * T_H2;
 dP_constrained = P_H2_avg_constrained - P_air;
 b_constrained = g*(rho_air-rho_H2_avg_constrained);
-dp_base = dP_constrained - b_constrained*(balloon.z(end)/2);
+dp_base = dP_constrained - b_constrained*(input.balloon.height/2);
     if dp_base < 0
         dp_base = 0;
         volume = volume_H2;
     else
         rho_H2_avg = rho_H2_avg_constrained;
-        volume = balloon.V;
+        volume = input.balloon.V;
     end
 
 %% Balloon Shape
@@ -55,7 +55,7 @@ diameter = 2.23*((0.75/pi)*(m_H2/rho_H2_avg))^(1/3);  %(m) balloon diameter
 Atop = (pi/4)*diameter^2;                             %(m^2) balloon top reference area
 Asurf = 2.582*diameter^2;
 Lgoreb = 1.37*diameter;
-Asurf1 = 4.94*balloon.V^(2/3) * (1-cos(pi*Lgoreb/balloon.s(end)));
+Asurf1 = 4.94*input.balloon.V^(2/3) * (1-cos(pi*Lgoreb/input.balloon.arclength));
 Aeffective = 0.65*Asurf + 0.35*Asurf1;
 
 %% Mass flow rate
@@ -74,15 +74,15 @@ mdot_H2 = mdot_H2_base + mdot_H2_hole;
 %% calculate net vertical acceleration
 CD = 0.8;
 Aref = Atop;
-L = (rho_air - rho_H2_avg) * g * volume;           %(N)
-W = (balloon.m_balloon + m_payload) * g;           %(N)
-Dz = (1/2) * rho_air * vz^2 * CD * Aref;           %(N)
-Fnet_z = L-W-Dz;                                   %(N)
-az = Fnet_z/(balloon.m_balloon+m_payload+m_H2);    %(m/s/s)
+L = (rho_air - rho_H2_avg) * g * volume;                  %(N)
+W = (input.balloon.m_PE + input.balloon.m_payload) * g;    %(N)
+Dz = (1/2) * rho_air * vz^2 * CD * Aref;                  %(N)
+Fnet_z = L-W-Dz;                                          %(N)
+az = Fnet_z/(input.balloon.m_PE + input.balloon.m_payload + m_H2); %(m/s/s)
 
 %% Process wind data
-gc = interp1( wind.HGHT, wind.DRCT, sz, 'linear', 'extrap');    %interpolate for ground course
-gs = interp1( wind.HGHT, wind.SPEED, sz, 'linear', 'extrap' );    %interpolate for ground course
+gc = interp1( input.wind.HGHT, input.wind.DRCT, sz, 'linear', 'extrap');    %interpolate for ground course
+gs = interp1( input.wind.HGHT, input.wind.SPEED, sz, 'linear', 'extrap' );    %interpolate for ground course
 
 vx_wind = gs * cosd(gc);  %(m/s) x-axis velocity during this time slice
 vy_wind = gs * sind(gc);  %(m/s) y-axis velocity during this time slice
@@ -96,8 +96,8 @@ Aref = Atop;
 Dx = (1/2) * rho_air * vx_inf^2 * CD * Aref * sign(vx_inf);
 Dy = (1/2) * rho_air * vy_inf^2 * CD * Aref * sign(vy_inf);
 
-ax = Dx/(balloon.m_balloon+m_payload+m_H2);
-ay = Dy/(balloon.m_balloon+m_payload+m_H2);
+ax = Dx/(input.balloon.m_PE + input.balloon.m_payload + m_H2);
+ay = Dy/(input.balloon.m_PE + input.balloon.m_payload + m_H2);
 
 %% Temperature differential equation
 Tfilm = mean([T_air, T_H2]);
@@ -107,7 +107,7 @@ Qburner = 0;
 Tdot_H2 = ((Qconvint + Qburner)/m_H2 - g*(T_H2/T_air)*(R_H2/R_air)*vz) * (1/CP_H2);
 
 %% format outputs
-outputs = [vx, ax, vy, ay, vz, az, mdot_H2, Tdot_H2]';
+ODE_outputs = [vx, ax, vy, ay, vz, az, mdot_H2, Tdot_H2]';
 data.L = L;
 data.W = W;
 data.Dz = Dz;
