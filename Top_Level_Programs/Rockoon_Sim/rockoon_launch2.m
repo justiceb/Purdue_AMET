@@ -6,6 +6,9 @@ load(input_filename) %load the following input parameters
 % rasaero              --> struct of all rasaero data
 % rocksim              --> struct of all rocksim data
 % vx_0                 --> (m/s) initial horizontal velocity
+% sz_0
+% long0
+% lat0
 
 %% Pre-ODE calculations
 % formulate 2d RASAero lookup table

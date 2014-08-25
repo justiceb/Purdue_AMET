@@ -22,7 +22,7 @@ function varargout = GUI2(varargin)
 
 % Edit the above text to modify the response to help GUI2
 
-% Last Modified by GUIDE v2.5 24-Aug-2014 22:20:47
+% Last Modified by GUIDE v2.5 25-Aug-2014 18:59:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -148,9 +148,95 @@ handles.launch = rockoon_launch2('launch_inputs');
 guidata(hObject, handles);
 
 
+% --- Executes on button press in Descent_Button.
+function Descent_Button_Callback(hObject, eventdata, handles)
+% hObject    handle to Descent_Button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+alt_chute = str2double(get(handles.alt_chute,'String')) * 0.3048;
+Dparachute = str2double(get(handles.Dparachute,'String')) * 0.0254;
+Drocket = str2double(get(handles.Drocket,'String')) * 0.001;
+Afin = str2double(get(handles.Afin,'String')) * 0.00064516;
 
+wind = handles.wind;
+mass = handles.balloon.m_payload;
+long0 = handles.launch.long(end);
+lat0 = handles.launch.lat(end);
+alt0 = handles.launch.sz(end);
+vx0 = handles.launch.vxx(end);
+vy0 = handles.launch.vyy(end);
+savex('descent_inputs.mat','hObject','eventdata','handles');
 
+%run ascent code.  save output to guidata
+handles.descent = rockoon_descent2('descent_inputs');
+guidata(hObject, handles);
+
+%% Formulate trajectory
+ascent = handles.ascent;
+launch = handles.launch;
+descent = handles.descent;
+t = ascent.t;
+t = [t; t(end) + launch.t];
+t = [t; t(end) + descent.t1];
+t = [t; t(end) + descent.t2];
+sx = ascent.sx;
+sx = [sx; sx(end) + launch.sxx];
+sx = [sx; sx(end) + descent.sx1];
+sx = [sx; sx(end) + descent.sx2];
+sy = ascent.sy;
+sy = [sy; sy(end) + launch.syy];
+sy = [sy; sy(end) + descent.sy1];
+sy = [sy; sy(end) + descent.sy2];
+sz = [ascent.sz; launch.sz; descent.sz1; descent.sz2];
+long = [ascent.long'; launch.long'; descent.long1'; descent.long2'];
+lat = [ascent.lat'; launch.lat'; descent.lat1'; descent.lat2'];
+
+%trajectory = [sz, long, lat];
+
+%% Plots
+
+figure(10)
+xlabels{1} = 'Ground Course (degrees)';
+xlabels{2} = 'Windspeed (mph)';
+ylabels{1} = 'Altitude (feet)';
+ylabels{2} = 'Altitude (feet)';
+[ax,L1,L2] = plotxx([ascent.gc, launch.gc], [ascent.sz; launch.sz]*3.28084, ...
+                    [ascent.gs, launch.gs]*2.23694, [ascent.sz; launch.sz]*3.28084, ...
+                    xlabels,ylabels);
+hold all
+L3 = plot(get(gca,'xlim'), launch.sz(1)*ones(1,2)*3.28084 ); %plot horizontal line
+L4 = plot(get(gca,'xlim'), launch.sz(end)*ones(1,2)*3.28084 ); %plot horizontal line
+legend([L3 L4],'Rocket Launch','Rocket Apogee')
+title('Sounding Wind Data')
+grid on
+
+figure(11)
+color_line(sx*0.000621371,sy*0.000621371,sz*3.28084);
+axis equal
+xlabel('x-distance (miles)')
+ylabel('y-distance (miles)')
+title('Mission Trajectory')
+cb = colorbar('peer',gca);
+set(get(cb,'ylabel'),'String', 'Altitude (feet)');
+grid on
+
+figure(12)
+plot(t*0.0166667,sz*3.28084)
+xlabel('t-time (minutes)')
+ylabel('Altitude (ft)')
+grid on
+
+m=1;
+for n = 1:1:length(sz)
+    if mod(n,4) == 0
+        a(m) = sz(n);
+        b(m) = long(n);
+        c(m) = lat(n);
+        m = m+1;
+    end
+end
+trajectory = [a; b; c]';
 
 
 
@@ -447,15 +533,68 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
+function alt_chute_Callback(hObject, eventdata, handles)
+% hObject    handle to alt_chute (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of alt_chute as text
+%        str2double(get(hObject,'String')) returns contents of alt_chute as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function alt_chute_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to alt_chute (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function Dparachute_Callback(hObject, eventdata, handles)
+% hObject    handle to Dparachute (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of Dparachute as text
+%        str2double(get(hObject,'String')) returns contents of Dparachute as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function Dparachute_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to Dparachute (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
 
 
+function Afin_Callback(hObject, eventdata, handles)
+% hObject    handle to Afin (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of Afin as text
+%        str2double(get(hObject,'String')) returns contents of Afin as a double
 
 
+% --- Executes during object creation, after setting all properties.
+function Afin_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to Afin (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
 
-
-
-
-
-
-
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
