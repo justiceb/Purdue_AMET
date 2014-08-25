@@ -1,14 +1,12 @@
 function ascent = rockoon_ascent2( input_filename )
 %% Inputs (Mission Criteria)
 load(input_filename) %load the following input parameters
-%balloon              --> struct of all balloon creation variables
-%wind                 --> struct of wind config data
-%V_H2_surplusfill     --> m^3 excess hydrogen volume to be filled at launch
-%alt0                 --> m launch altitude
+% balloon              --> struct of all balloon creation variables
+% wind                 --> struct of wind config data
+% V_H2_surplusfill     --> m^3 excess hydrogen volume to be filled at launch
+% alt0                 --> m launch altitude
 
 %constants  (mission criteria and materials)
-g = 9.81;                     %m/s/s
-R_air = 287.058;              %specific gas constant air (SI)
 R_H2 = 4124;                  %specific gas constant hydrogen (SI)
 
 %% Pre-ODE Calculations
