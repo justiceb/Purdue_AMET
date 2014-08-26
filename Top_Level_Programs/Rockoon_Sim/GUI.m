@@ -1,35 +1,35 @@
-function varargout = GUI2(varargin)
-% GUI2 MATLAB code for GUI2.fig
-%      GUI2, by itself, creates a new GUI2 or raises the existing
+function varargout = GUI(varargin)
+% GUI MATLAB code for GUI.fig
+%      GUI, by itself, creates a new GUI or raises the existing
 %      singleton*.
 %
-%      H = GUI2 returns the handle to a new GUI2 or the handle to
+%      H = GUI returns the handle to a new GUI or the handle to
 %      the existing singleton*.
 %
-%      GUI2('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in GUI2.M with the given input arguments.
+%      GUI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in GUI.M with the given input arguments.
 %
-%      GUI2('Property','Value',...) creates a new GUI2 or raises the
+%      GUI('Property','Value',...) creates a new GUI or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before GUI2_OpeningFcn gets called.  An
+%      applied to the GUI before GUI_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to GUI2_OpeningFcn via varargin.
+%      stop.  All inputs are passed to GUI_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help GUI2
+% Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 25-Aug-2014 19:45:06
+% Last Modified by GUIDE v2.5 25-Aug-2014 23:13:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @GUI2_OpeningFcn, ...
-                   'gui_OutputFcn',  @GUI2_OutputFcn, ...
+                   'gui_OpeningFcn', @GUI_OpeningFcn, ...
+                   'gui_OutputFcn',  @GUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -43,8 +43,8 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% --- Executes just before GUI2 is made visible.
-function GUI2_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before GUI is made visible.
+function GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % Clear workspace
 evalin('base','clear')
 clc;
@@ -63,14 +63,14 @@ addpath(genpath(strcat(Parent,'Programs\Ascent_ZP_Balloon')));
 addpath(genpath(strcat(Parent,'Programs\Rocket_3DOF')));
 addpath(genpath(strcat(Parent,'Programs\Descent_Parachute')));
 
-% Choose default command line output for GUI2
+% Choose default command line output for GUI
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = GUI2_OutputFcn(hObject, eventdata, handles) 
+function varargout = GUI_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -245,6 +245,9 @@ function Run_Sim_Button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+set(handles.figure1, 'pointer', 'watch')
+drawnow;
+
 callback = get(handles.Create_Balloon_Button,'Callback');
 feval(callback,hObject, handles)
 
@@ -257,6 +260,7 @@ feval(callback,hObject, handles)
 callback = get(handles.Descent_Button,'Callback');
 feval(callback,hObject, handles)
 
+set(handles.figure1, 'pointer', 'arrow')
 
 
 
