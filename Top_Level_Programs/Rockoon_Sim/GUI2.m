@@ -22,7 +22,7 @@ function varargout = GUI2(varargin)
 
 % Edit the above text to modify the response to help GUI2
 
-% Last Modified by GUIDE v2.5 25-Aug-2014 18:59:34
+% Last Modified by GUIDE v2.5 25-Aug-2014 19:45:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -239,17 +239,23 @@ end
 trajectory = [a; b; c]';
 
 
+% --- Executes on button press in Run_Sim_Button.
+function Run_Sim_Button_Callback(hObject, eventdata, handles)
+% hObject    handle to Run_Sim_Button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+callback = get(handles.Create_Balloon_Button,'Callback');
+feval(callback,hObject, handles)
 
+callback = get(handles.Ascent_Button,'Callback');
+feval(callback,hObject, handles)
 
+callback = get(handles.Launch_Button,'Callback');
+feval(callback,hObject, handles)
 
-
-
-
-
-
-
-
+callback = get(handles.Descent_Button,'Callback');
+feval(callback,hObject, handles)
 
 
 
@@ -598,3 +604,4 @@ function Afin_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
