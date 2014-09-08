@@ -237,6 +237,7 @@ for n = 1:1:length(sz)
     end
 end
 trajectory = [a; b; c]';
+assignin('base','trajectory',trajectory);
 
 
 % --- Executes on button press in Run_Sim_Button.
