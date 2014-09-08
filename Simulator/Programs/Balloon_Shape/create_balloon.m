@@ -26,15 +26,6 @@ deployed.  This will stay relatively accurate for small deviations from
 the designed payload weight.
 %}
 
-%% Dependencies
-Parent = pwd;
-NAME = 'null';
-while ~strcmp(NAME,'Matlab')
-    [Parent,NAME,EXT] = fileparts(Parent);
-end
-Parent = strcat(Parent,'\',NAME,'\');
-addpath(genpath(strcat(Parent,'Common_Functions')));
-
 %% Inputs (Mission Criteria)
 load(balloon_input_filename) %load the following input parameters
 %rho_PE         --> kg/m^3  density of polyethlyene we purchased

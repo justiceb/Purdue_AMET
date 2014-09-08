@@ -22,7 +22,7 @@ function varargout = GUI(varargin)
 
 % Edit the above text to modify the response to help GUI
 
-% Last Modified by GUIDE v2.5 25-Aug-2014 23:13:44
+% Last Modified by GUIDE v2.5 07-Sep-2014 21:08:53
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -50,18 +50,7 @@ evalin('base','clear')
 clc;
 
 % Dependencies
-Parent = pwd;
-NAME = 'null';
-while ~strcmp(NAME,'Matlab')
-    [Parent,NAME,EXT] = fileparts(Parent);
-end
-Parent = strcat(Parent,'\',NAME,'\');
-addpath(genpath(strcat(Parent,'Common_Functions')));
-addpath(genpath(strcat(Parent,'Config_Files')));
-addpath(genpath(strcat(Parent,'Programs\Balloon_Shape')));
-addpath(genpath(strcat(Parent,'Programs\Ascent_ZP_Balloon')));
-addpath(genpath(strcat(Parent,'Programs\Rocket_3DOF')));
-addpath(genpath(strcat(Parent,'Programs\Descent_Parachute')));
+addpath(genpath(pwd));
 
 % Choose default command line output for GUI
 handles.output = hObject;
@@ -610,3 +599,67 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+
+
+% --- Executes on button press in save_gui_inputs.
+function save_gui_inputs_Callback(hObject, eventdata, handles)
+% hObject    handle to save_gui_inputs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[filename, pathname] = uigetfile('GUI_inputs/*.mat', 'Pick or create a GUI iunputs file');
+    if isequal(filename,0) || isequal(pathname,0)
+       % user pressed cancel.  Do nothing
+    else
+        inputs = struct;
+        m = 1;
+        NAMES = fieldnames(handles);
+        for n = 1:1:length(NAMES)
+            if isprop(handles.(NAMES{n}),'style')
+                if strcmp('edit' , get(handles.(NAMES{n}),'style') )
+                    inputs(m).tag = get(handles.(NAMES{n}),'tag');
+                    inputs(m).string = get(handles.(NAMES{n}),'string');
+                    m = m+1;
+                end
+            end
+        end
+        save(fullfile(pathname,filename),'inputs');
+    end
+
+% --- Executes on button press in load_GUI_inputs.
+function load_GUI_inputs_Callback(hObject, eventdata, handles)
+% hObject    handle to load_GUI_inputs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[filename, pathname] = uigetfile('GUI_inputs/*.mat', 'Pick or create a GUI iunputs file');
+    if isequal(filename,0) || isequal(pathname,0)
+       % user pressed cancel.  Do nothing
+    else
+        temp = load(fullfile(pathname,filename));
+        inputs = temp.inputs;
+        for n = 1:1:length(inputs)
+            set(handles.(inputs(n).tag),'string',inputs(n).string)
+        end
+    end
+
+
+
+function gui_inputs_filepath_Callback(hObject, eventdata, handles)
+% hObject    handle to gui_inputs_filepath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of gui_inputs_filepath as text
+%        str2double(get(hObject,'String')) returns contents of gui_inputs_filepath as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function gui_inputs_filepath_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gui_inputs_filepath (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
