@@ -76,12 +76,12 @@ function Create_Balloon_Button_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %read input values and convert to appropriate units
-rho_PE = str2double(get(handles.rho_PE,'String'));
-thickness_PE = str2double(get(handles.thickness_PE,'String')) * 1E-6;
-Wpayload = str2double(get(handles.Wpayload,'String')) * 4.44822162;
-alt_apogee = str2double(get(handles.alt_apogee,'String')) * 0.3048;
-numGores = str2double(get(handles.numGores,'String'));
-savex('balloon_inputs.mat','hObject','eventdata','handles');
+rho_PE = str2double(get(handles.rho_PE,'String'));                      %kg/m^3
+thickness_PE = str2double(get(handles.thickness_PE,'String')) * 1E-6;   %m
+Wpayload = str2double(get(handles.Wpayload,'String')) * 4.44822162;     %N
+alt_apogee = str2double(get(handles.alt_apogee,'String')) * 0.3048;     %m
+numGores = str2double(get(handles.numGores,'String'));                  %
+savex('balloon_inputs.mat','hObject','eventdata','handles');            %save inputs to file
 
 %run balloon creation code.  save output to guidata
 handles.balloon = create_balloon('balloon_inputs');

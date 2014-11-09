@@ -12,19 +12,9 @@ function balloon_output = create_balloon(balloon_input_filename)
 %
 %           "Scientific Ballooning", Nobuyuki Yajima, Naoki Izutsu,
 %            Takeshi Imamura, Toyoo Abe
-%{
-The balloon shape is determined early on in the design process with a
-predicted payload weight.  All of these design inputs are placed at the top
-of the create_balloon script file.  Once the balloon is created, these
-inputs cannot be changed.  However, we often find that the actual measured
-payload weight on the day of the launch is slightly different from the
-designed payload weight.  We also often find that the balloon weight is
-slightly different.  For the remainder of this integrated sim, we will use 
-these measure values for increased sim accuracy.  The only value that we
-extract from the balloon_shape sim is the balloon volume when fully 
-deployed.  This will stay relatively accurate for small deviations from
-the designed payload weight.
-%}
+% Units:
+%           ALL calculations performaed in SI units.  Only converted
+%           to english units for printing or plotting
 
 %% Inputs (Mission Criteria)
 load(balloon_input_filename) %load the following input parameters
@@ -53,12 +43,12 @@ epsilon = (2*pi)^(1/3) * wd * g / (bd*lambda); %shaping parameter []
 a_dash = a/lambda; 
 
 %print sizing parameters in english units (easier to digest)
-fprintf('bd = %f lbs/ft^3 \n',bd / 157.087464)
-fprintf('Payload = %f lbs \n',Wpayload / 4.44822162)
-fprintf('lambda = %f ft\n',lambda*3.28084)
-fprintf('wd = %f lbs/ft^2 \n',wd *0.204816144)
-fprintf('epsilon = %f \n',epsilon)
-fprintf('Number of gores = %f\n', numGores)
+%fprintf('bd = %f lbs/ft^3 \n',bd / 157.087464)
+%fprintf('Payload = %f lbs \n',Wpayload / 4.44822162)
+%fprintf('lambda = %f ft\n',lambda*3.28084)
+%fprintf('wd = %f lbs/ft^2 \n',wd *0.204816144)
+%fprintf('epsilon = %f \n',epsilon)
+%fprintf('Number of gores = %f\n', numGores)
 
 %% Shooting method simulation for finding gore contour shape
 %constant initial conditions
@@ -152,6 +142,7 @@ m_PE = S*wd;  %kg
 m_payload = Wpayload / g;
 arclength = s(end);
 height = z(end);
+fprintf('epsilon = %f \n',epsilon)
 fprintf('balloon surface area = %f m^2 \n',S )
 fprintf('balloon volume = %f m^3 \n',V )
 fprintf('balloon volume = %f ft^3 \n',V *35.3147)
@@ -164,6 +155,7 @@ fprintf('angle at apex = %f degrees  (shoot for -90) \n',theta(end)/ 0.017453292
 fprintf('angle at base = %f degrees  (shoot for -90) \n',theta(1)/ 0.0174532925 )
 fprintf('radius at apex = %f m  (shoot for 0) \n',r(end) )
 fprintf('arclength of gore = %f m \n',arclength )
+fprintf('\n')
 
 f1 = figure(1);
 subplot(1,2,1)
@@ -175,42 +167,25 @@ axis equal
 title('balloon gore contour at apogee')
 
 %% Determine Gore Shape
-goreTheta = (2*pi)/numGores;  %radians rotation per gore
-lengthTot = 0;
-q = length(r);
-marker = 1;
-Vlength = 0;
-Vwidth = 0;
-for i=1:1:q-1
-    dx=r(i+1)-r(i);
-    dy=z(i+1)-z(i);
-    lengthSec = sqrt((dx)^2+(dy)^2);
-    lengthTot = lengthTot + lengthSec;
-    Vlength = [Vlength, lengthTot*3.28];
-    
-    goreWidth=r(i)*3.28*goreTheta;
-    Vwidth = [Vwidth, goreWidth];
-    %fprintf('At %f inches from bottom, gore is %f inches from center\n',lengthTot*3.28*12,goreWidth/2*12)
-    %fprintf('At %f feet from bottom, gore is %f feet wide\n',lengthTot*3.28,goreWidth)
+goreTheta = (2*pi)/numGores;              %radians rotation per gore
+s_print = 0:0.1:s(end);
+for n = 1:1:length(s_print);
+    r_print = interp1(s,r,s_print(n));
+    goreWidth(n) = r_print*goreTheta;    %m arc length formula
+    fprintf('At %.1f cm from bottom, gore is %.2f cm from center\n',s_print(n)*100,goreWidth(n)/2*100)
 end
-fprintf('arclength of gore (method 2)= %f m \n',lengthTot)
 
 subplot(1,2,2)
-plot(Vwidth/2,Vlength,'--',-Vwidth/2,Vlength,'--')
-hold all
-plot(Vwidth/2+0.25,Vlength,-Vwidth/2-0.25,Vlength)
-%xlim([-35,35]);
-%ylim([0,70]);
-xlabel('width (ft)')
-ylabel('length (ft)')
-title('Gore shape')
+plot(goreWidth/2,s_print,-goreWidth/2,s_print)
+xlabel('width (m)')
+ylabel('length (m)')
+title('Flat Gore Shape (stencil)')
 axis equal
-legend('conventional gore','','3-D design gore','')
 grid on
 
 %% 3D plot
-y = r_dash*lambda;
-x = z_dash*lambda;
+y = r;
+x = z;
 ni = length(x);
 nj = 2*ni-1;
 tt = linspace(0,2*pi,nj);
